@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports / logs / artifacts
+reports/
+logs/
+*.log
+*.pcap
+*.cap
+
+# Qt / PySide
+*.qmlc
+*.jsc
+
+# Tauri build
+tauri-app/target/
+tauri-app/dist/
+tauri-app/node_modules/
+tauri-app/src-tauri/target/
+
+# Submodule (keep .gitmodules but ignore content if desired)
+# backend/MasterBlaster/   # commented - we want the submodule tracked

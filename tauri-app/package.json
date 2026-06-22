@@ -1,0 +1,10 @@
+{
+  "name": "masterblaster-control-tauri",
+  "version": "1.0.0",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  }
+}

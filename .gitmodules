@@ -1,0 +1,4 @@
+[submodule "backend/MasterBlaster"]
+	path = backend/MasterBlaster
+	url = https://github.com/eregular13/MasterBlaster.git
+	branch = main

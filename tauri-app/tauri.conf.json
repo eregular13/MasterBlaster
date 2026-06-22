@@ -1,0 +1,18 @@
+{
+  "productName": "MasterBlaster-Control",
+  "version": "1.0.0",
+  "identifier": "com.eregular13.masterblastercontrol",
+  "build": {
+    "frontendDist": "dist",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MasterBlaster-Control (Tauri)",
+        "width": 1200,
+        "height": 800
+      }
+    ]
+  }
+}
