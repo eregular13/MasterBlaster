@@ -47,9 +47,29 @@ python main.py
 
 See the full push sequence in the generation.
 
-## 20 MCPs
+## 22 MCPs (20 + 2 expandable slots)
 1. Recon-Nmap MCP
-... (list as before)
+2. Recon-Maltego OSINT MCP
+3. Vuln-OpenVAS MCP
+4. Vuln-Nikto Web MCP
+5. Web-Burp Suite Proxy MCP
+6. Web-SQLMap MCP
+7. Web-Gobuster Hybrid MCP
+8. Exploit-Metasploit Framework MCP
+9. Exploit-SET Social-Engineering MCP
+10. Wireless-Aircrack-ng Suite MCP
+11. Wireless-Bettercap MITM MCP
+12. Wireless-Yersinia Layer2 MCP
+13. Password-John + Hashcat Hybrid MCP
+14. Password-Hydra Brute MCP
+15. Password-Responsive LLMNR MCP
+16. Post-Empire MCP
+17. Forensics-Autopsy + Volatility MCP
+18. Forensics-Foremost Carver MCP
+19. Sniff-Wireshark + tcpdump MCP
+20. Reporting-Dradis + Export MCP
+21. Future MCP 21 (Expandable)
+22. Future MCP 22 (Expandable)
 
 ## Ethics
 See ethics.md
@@ -57,7 +77,7 @@ See ethics.md
 For authorized use only.
 
 ## Bonus Image Prompts (v1.1 Real Control Plane)
-1. Professional dark Kali Linux desktop GUI MasterBlaster-Control v1.1, top bar with logo and global target, left sidebar 20 MCP buttons with live colored status dots (gray/green/yellow/red), central dashboard with 12 live cards showing Running/Success/Failed with progress bars, right workflow chain list with up/down/remove and Execute button, modern cyber UI, 4K
+1. Professional dark Kali Linux desktop GUI MasterBlaster-Control v1.1, top bar with logo and global target, left sidebar 22 MCP buttons with live colored status dots (gray/green/yellow/red), central dashboard with full grid of 22 live cards showing Running/Success/Failed/Stopped with progress bars, right workflow chain list with up/down/remove and Execute button, modern cyber UI, 4K
 2. Detailed PySide6 MCP tab for SQLMap in dark theme: parameter form, big Execute and Stop buttons, live scrolling terminal output, progress bar, parsed results table showing found vulnerabilities, status badges
 3. Interactive workflow builder canvas in MasterBlaster-Control: draggable MCP nodes (Nmap, SQLMap, Metasploit) connected in sequence, global target, live execution status glow on current step, dark Kali aesthetic with universal log below
 
