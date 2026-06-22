@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QSplitter, QListWidget, QListWidgetItem, QLabel, QLineEdit,
     QPushButton, QTextEdit, QProgressBar, QMenuBar, QStatusBar,
     QMessageBox, QCheckBox, QFileDialog, QGridLayout, QFrame, QPlainTextEdit, QComboBox,
-    QScrollArea
+    QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import Qt, QProcess, QSettings, QTimer
 from PySide6.QtGui import QFont, QAction
@@ -157,15 +157,18 @@ class MainWindow(QMainWindow):
 
         # LEFT SIDEBAR
         sidebar = QWidget()
+        sidebar.setMinimumWidth(230)
         side_layout = QVBoxLayout(sidebar)
         side_layout.setContentsMargins(5, 5, 5, 5)
 
-        mcp_label = QLabel("MCPs (20 + 2 slots)")
+        mcp_label = QLabel(f"MCPs ({len(MCPS)})")
         mcp_label.setFont(QFont("Consolas", 11, QFont.Bold))
         side_layout.addWidget(mcp_label)
 
         self.mcp_list = QListWidget()
         self.mcp_list.setMaximumWidth(220)
+        self.mcp_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.mcp_list.setMinimumHeight(450)
         for mcp in MCPS:
             item = QListWidgetItem(f"  {mcp['name']}")
             item.setData(Qt.UserRole, mcp['id'])
@@ -205,6 +208,9 @@ class MainWindow(QMainWindow):
 
         central_splitter.addWidget(self.main_tabs)
         central_splitter.setStretchFactor(1, 4)
+
+        # Set reasonable initial sizes for sidebar | main | right panel
+        central_splitter.setSizes([240, 850, 280])
 
         # RIGHT PANEL - Workflow Builder (now functional)
         right_panel = QWidget()
@@ -325,7 +331,7 @@ class MainWindow(QMainWindow):
         scroll = QScrollArea()
         scroll.setWidget(container)
         scroll.setWidgetResizable(True)
-        scroll.setMinimumHeight(280)
+        scroll.setMinimumHeight(420)
         return scroll
 
     def _switch_to_mcp(self, mcp_id):
