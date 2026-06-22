@@ -1,21 +1,21 @@
-# MasterBlaster-Control • Kali MCP Nexus v1.0
+# MasterBlaster-Control • Kali MCP Nexus v1.1 (Usable Orchestration Control Plane)
 
 Professional desktop GUI Control Plane that orchestrates the 20+ MCPs from the MasterBlaster engine.
 
-## Features
+## Features (v1.1 - Usable Product)
 - Full PySide6 (Qt6) dark Kali-themed GUI
-- Git submodule integration with MasterBlaster (core engine)
-- Dedicated "MasterBlaster Direct" tab for one-click launch of any script from the submodule
-- Bidirectional target/results piping between GUI MCPs and MasterBlaster
-- 20 rich MCP tabs + 2 expandable slots
-- Dashboard grid with live status cards
-- Per-MCP parameter forms, presets, Execute button, live output pane, charts
-- Bottom: Universal log + evidence collector
-- Right: Target intel + quick workflow builder (drag-drop MCP chain)
-- Extra tab: “MasterBlaster Bridge” — full control over the original repo’s functions
-- “Verify & Install All Kali Tools” button
-- Ethics & legal banner with acknowledgment
-- Watermark toggle for reports
+- 22 MCP tabs + expandable slots with parameter forms
+- **Live Dashboard Cards**: All MCPs shown, real-time Idle/Running/Success/Failed/Stopped, color coding, progress bars. Clickable to jump to tab.
+- **Functional Run All MCPs**: Sequential execution (completion-driven, not timers). Live card updates + aggregated results.
+- **Global Stop All**: Cleanly terminates running processes, aborts batches/workflows, updates UI/cards.
+- **Functional Workflow Builder**: Add/reorder/remove MCPs in right panel. Execute Chain runs in order with live status, logs, intel.
+- Per-MCP **Stop** button + robust QProcess handling.
+- **Demo-safe execution**: If Kali tools missing (Windows dev etc.), realistic simulated outputs per MCP type with parsed intel (ports, vulns, creds, etc.).
+- Universal log + Target Intel panel with automatic aggregation.
+- Evidence collector + full Export (menu) with watermarked Markdown reports.
+- “Verify & Install All Kali Tools” button (real PATH check + demo notes).
+- Ethics & legal banner + watermark toggle in Settings.
+- Polish: status bar, global target sync across tabs, button state management.
 
 ## Tech Stack
 - Primary: Python 3.12 + PySide6 (Qt6) native desktop GUI (dark Kali theme)
@@ -39,10 +39,11 @@ Use the "Verify & Install All Kali Tools" button or run:
 git clone https://github.com/eregular13/MasterBlaster.git
 cd MasterBlaster
 git submodule update --init --recursive
-chmod +x setup.sh
-./setup.sh
+pip install pyside6 pyyaml
 python main.py
 ```
+
+**Note**: Runs on any OS. On non-Kali hosts, missing tools auto-use realistic demo/simulated output so you can test the full orchestration, dashboard, Run All, Workflows, Stop, and exports immediately.
 
 See the full push sequence in the generation.
 
@@ -55,10 +56,10 @@ See ethics.md
 
 For authorized use only.
 
-## Bonus Image Prompts
-1. Professional dark Kali Linux desktop GUI called MasterBlaster-Control, top bar with logo and global target input, left sidebar with 20 MCP status cards, central dashboard grid of colorful status cards, modern flat cyber design, high contrast, 4K resolution
-2. PySide6 dark theme tab for Recon-Nmap MCP inside MasterBlaster-Control. Left: clean form with Target, Ports, Flags. Center: big green Execute button. Right: live terminal output. Bottom: results table. Professional pentest tool aesthetic
-3. Dark cybersecurity workflow canvas in MasterBlaster-Control. Drag-drop nodes for different MCPs connected by arrows, target flow, evidence collector on right. Clean modern UI, Kali color palette
+## Bonus Image Prompts (v1.1 Real Control Plane)
+1. Professional dark Kali Linux desktop GUI MasterBlaster-Control v1.1, top bar with logo and global target, left sidebar 20 MCP buttons with live colored status dots (gray/green/yellow/red), central dashboard with 12 live cards showing Running/Success/Failed with progress bars, right workflow chain list with up/down/remove and Execute button, modern cyber UI, 4K
+2. Detailed PySide6 MCP tab for SQLMap in dark theme: parameter form, big Execute and Stop buttons, live scrolling terminal output, progress bar, parsed results table showing found vulnerabilities, status badges
+3. Interactive workflow builder canvas in MasterBlaster-Control: draggable MCP nodes (Nmap, SQLMap, Metasploit) connected in sequence, global target, live execution status glow on current step, dark Kali aesthetic with universal log below
 
 ```
 
