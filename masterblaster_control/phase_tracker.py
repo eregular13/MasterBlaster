@@ -44,10 +44,10 @@ def list_phase_progress() -> tuple[PhaseProgress, ...]:
         PhaseProgress(
             "P8",
             "Enterprise horizon",
-            65,
+            85,
             "in_progress",
-            ("hsm_signing", "signed_installer"),
-            "MCP stdio, local auth, hot-reload, assistant, Pages, installer CI.",
+            ("hsm_signing", "codesigned_installer"),
+            "v1.0.0 tagged; MCP, auth, hot-reload, pen-test pack, Pages CI shipped.",
         ),
         PhaseProgress(
             "P9",
