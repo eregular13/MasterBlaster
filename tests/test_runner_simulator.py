@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
+from hashlib import sha256
+
+import pytest
 
 from masterblaster_control.p0_approvals import approve_request, request_approval
 from masterblaster_control.p0_policy import REASON_ALLOW, REASON_APPROVAL_REQUIRED, REASON_TARGET_OUT_OF_SCOPE, canonical_json
-from masterblaster_control.runner_simulator import RunnerSimulator, build_default_engagement
-from hashlib import sha256
+from masterblaster_control.runner_simulator import MANIFESTS, RunnerSimulator, build_default_engagement
 
 
 def _approved(engagement, adapter_id, target, now):
@@ -65,3 +67,8 @@ def test_tls_fake_transport_completes_for_domain_target():
     assert result.status == "completed"
     assert result.decision.reason_code == REASON_ALLOW
     assert result.evidence[0].content["transport"] == "fake"
+
+
+def test_manifest_registry_is_immutable_to_callers():
+    with pytest.raises(TypeError):
+        MANIFESTS["evil.live.adapter"] = MANIFESTS["a0.fixture.inventory"]  # type: ignore[index]

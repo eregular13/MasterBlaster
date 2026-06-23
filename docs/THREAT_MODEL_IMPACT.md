@@ -12,6 +12,8 @@
 - Acceptance dashboard criteria and evidence links.
 - Storage redaction and retention policy.
 - Read-only MCP facade descriptors and draft renderers.
+- CI workflow definitions, dependency metadata, deterministic SBOM, CODEOWNERS, PR template, and governance policy.
+- Prohibited-capability scanner rules and findings.
 
 ## Trust Boundaries
 
@@ -29,6 +31,8 @@ Redaction is not trusted as permission to collect secrets. It is a fail-soft per
 
 The read-only MCP facade is not trusted for authorization. It can render deterministic planning/report drafts and read registered resources, but it cannot issue jobs, approve scope, invoke adapters, contact targets, or override runner policy.
 
+CI and governance files are not trusted authorization boundaries. They provide reproducible review and drift signals; the runner remains the enforcement boundary for simulator jobs.
+
 ## Threats Reduced
 
 - Arbitrary command execution through user-controlled flags or script paths.
@@ -41,6 +45,11 @@ The read-only MCP facade is not trusted for authorization. It can render determi
 - Approval spoofing, because missing, denied, expired, or mismatched approvals fail closed before job issuance.
 - Local artifact over-retention, because old approvals, jobs, evidence, and audit events can be purged in dependency-safe order.
 - MCP surface creep, because the facade only exposes resource reads and draft renderers and unknown tool names fail closed.
+- Secret-bearing or ambiguous URL targets, because userinfo, query strings, and fragments are rejected before job issue.
+- Mutable registry tampering, because the reviewed manifest registry is exposed as a read-only mapping.
+- Supply-chain drift, because SBOM check mode fails when dependency metadata changes without regenerated SPDX output.
+- Governance drift, because CODEOWNERS, sensitive-path inventory, policy docs, and PR templates are machine-validated.
+- Reintroduction of Python execution/network primitives, because the AST scanner fails on representative forbidden constructs.
 
 ## Threats Remaining
 
@@ -48,4 +57,4 @@ The read-only MCP facade is not trusted for authorization. It can render determi
 - The local simulator signing key is process-local and intended only for demo validation.
 - Report exports are Markdown drafts and still require downstream review before use.
 - A future MCP network or stdio transport still needs integration tests proving it delegates only to the read-only facade.
-- CI does not yet generate an SBOM or enforce code-owner review for security-sensitive files.
+- GitHub remote enforcement settings cannot be proven from repository files alone; maintainers must enable required checks, dependency graph support, and CODEOWNERS-required review.

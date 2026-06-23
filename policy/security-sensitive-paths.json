@@ -1,0 +1,196 @@
+{
+  "version": "1.0",
+  "review_owner": "@eregular13",
+  "security_sensitive_paths": [
+    {
+      "pattern": "/masterblaster_control/runner_simulator.py",
+      "category": "runner",
+      "rationale": "Runner issues signed simulator jobs and emits evidence."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_policy.py",
+      "category": "policy",
+      "rationale": "Scope parsing, deny-by-default policy, and signature validation live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_approvals.py",
+      "category": "approval",
+      "rationale": "Human approval state and runner approval validation live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_models.py",
+      "category": "schemas",
+      "rationale": "Security-critical frozen P0 schema boundaries are defined here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_storage.py",
+      "category": "storage",
+      "rationale": "Local audit, job, evidence, approval, and migration persistence lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_retention.py",
+      "category": "retention-redaction",
+      "rationale": "Secret redaction and retention purge policy live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_resources.py",
+      "category": "resources",
+      "rationale": "Non-executing governance resource registry lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_mcp_readonly.py",
+      "category": "mcp",
+      "rationale": "Read-only MCP-shaped facade boundary lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p0_acceptance.py",
+      "category": "acceptance",
+      "rationale": "P0 acceptance criteria and P1 gate telemetry live here."
+    },
+    {
+      "pattern": "/masterblaster_control/mcp_tab.py",
+      "category": "ui-runner-bridge",
+      "rationale": "Qt job request path into the runner simulator lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/masterblaster_bridge.py",
+      "category": "ui-governance",
+      "rationale": "Qt guardrails, resources, and acceptance display live here."
+    },
+    {
+      "pattern": "/masterblaster_control/utils.py",
+      "category": "reports",
+      "rationale": "Report draft filesystem writes and disclaimers live here."
+    },
+    {
+      "pattern": "/scripts/validate_p0_registry.py",
+      "category": "validation",
+      "rationale": "Top-level P0 registry and acceptance validator lives here."
+    },
+    {
+      "pattern": "/scripts/demo_p0_overdrive.py",
+      "category": "demo",
+      "rationale": "Human-verifiable deterministic simulator demo lives here."
+    },
+    {
+      "pattern": "/scripts/generate_sbom.py",
+      "category": "supply-chain",
+      "rationale": "Deterministic SPDX SBOM generation and check mode live here."
+    },
+    {
+      "pattern": "/scripts/validate_governance.py",
+      "category": "governance",
+      "rationale": "Machine-checkable security review policy validation lives here."
+    },
+    {
+      "pattern": "/scripts/scan_prohibited_capabilities.py",
+      "category": "capability-scan",
+      "rationale": "AST scanner for forbidden execution and network primitives lives here."
+    },
+    {
+      "pattern": "/pyproject.toml",
+      "category": "dependency-metadata",
+      "rationale": "Project dependency metadata and Python support boundary live here."
+    },
+    {
+      "pattern": "/requirements.txt",
+      "category": "dependency-metadata",
+      "rationale": "Pinned local runtime and test dependencies live here."
+    },
+    {
+      "pattern": "/sbom/masterblaster-p0.spdx.json",
+      "category": "supply-chain",
+      "rationale": "Generated SPDX dependency inventory lives here."
+    },
+    {
+      "pattern": "/.github/workflows/*.yml",
+      "category": "ci",
+      "rationale": "Verification and dependency review workflows live here."
+    },
+    {
+      "pattern": "/.github/CODEOWNERS",
+      "category": "governance",
+      "rationale": "Repository review routing for sensitive paths lives here."
+    },
+    {
+      "pattern": "/.github/pull_request_template.md",
+      "category": "governance",
+      "rationale": "Reviewer evidence prompts for security-sensitive changes live here."
+    },
+    {
+      "pattern": "/policy/security-sensitive-paths.json",
+      "category": "governance",
+      "rationale": "Canonical sensitive path inventory lives here."
+    },
+    {
+      "pattern": "/docs/SECURITY_IMPACT.md",
+      "category": "security-docs",
+      "rationale": "Security impact documentation lives here."
+    },
+    {
+      "pattern": "/docs/THREAT_MODEL_IMPACT.md",
+      "category": "security-docs",
+      "rationale": "Threat model impact documentation lives here."
+    },
+    {
+      "pattern": "/docs/P0_ACCEPTANCE_CHECKLIST.md",
+      "category": "acceptance-docs",
+      "rationale": "Rendered acceptance evidence lives here."
+    },
+    {
+      "pattern": "/docs/architecture/*.md",
+      "category": "architecture-docs",
+      "rationale": "Security-sensitive architecture decisions and boundaries live here."
+    },
+    {
+      "pattern": "/docs/governance/*.md",
+      "category": "governance-docs",
+      "rationale": "Security review and repository-rule documentation lives here."
+    },
+    {
+      "pattern": "/docs/supply-chain/*.md",
+      "category": "supply-chain-docs",
+      "rationale": "SBOM and dependency-review documentation lives here."
+    },
+    {
+      "pattern": "/docs/audits/*.md",
+      "category": "audit-docs",
+      "rationale": "P0 adversarial audit records live here."
+    },
+    {
+      "pattern": "/docs/adr/*.md",
+      "category": "adr",
+      "rationale": "Security-sensitive architecture decision records live here."
+    },
+    {
+      "pattern": "/tests/test_runner_simulator.py",
+      "category": "tests",
+      "rationale": "Runner simulator safety regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_p0_*.py",
+      "category": "tests",
+      "rationale": "P0 policy, approval, storage, resource, and acceptance tests live here."
+    },
+    {
+      "pattern": "/tests/test_sbom_generation.py",
+      "category": "tests",
+      "rationale": "Supply-chain SBOM regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_governance_review_policy.py",
+      "category": "tests",
+      "rationale": "Governance drift and negative validation tests live here."
+    },
+    {
+      "pattern": "/tests/test_prohibited_capability_scanner.py",
+      "category": "tests",
+      "rationale": "Prohibited capability scanner regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_utils.py",
+      "category": "tests",
+      "rationale": "Report draft filesystem safety tests live here."
+    }
+  ]
+}

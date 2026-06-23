@@ -18,11 +18,17 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Added runner-enforced human approval artifacts before simulator job envelope issuance.
 - Added defensive storage redaction and deterministic retention purge controls.
 - Added a dependency-free read-only MCP facade for resources, planning briefs, and simulator report drafts.
+- Added deterministic SPDX SBOM generation/checks and least-privilege GitHub Actions workflow definitions.
+- Added security-sensitive path inventory, CODEOWNERS routing, pull-request template, and governance drift validation.
+- Added an AST-based prohibited-capability scanner for Python execution and network primitives.
+- Hardened URL target parsing to reject userinfo, query strings, and fragments before simulator job issue.
+- Hardened report draft writing to reject unsafe filesystem prefixes.
+- Made the reviewed manifest registry read-only to external callers.
 
 ## Privileged Behavior
 
-P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy, approval, and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources, acceptance criteria, and read-only MCP facade outputs are inert governance content and cannot create or approve executable work.
+P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy, approval, and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources, acceptance criteria, SBOM/governance checks, and read-only MCP facade outputs are inert governance content and cannot create or approve executable work.
 
 ## Residual Risk
 
-The desktop UI still creates a local simulator engagement from the entered target for demonstration. Durable authorization workflows, tenant-aware application queries beyond the local skeleton, approval workflows, CI dependency review, and security-sensitive review policy remain future P0 work. A future network or stdio MCP transport must delegate to the read-only facade without adding job execution.
+The desktop UI still creates a local simulator engagement from the entered target for demonstration. Durable authorization workflows, tenant-aware application queries beyond the local skeleton, and approval workflows remain future P0 work. A future network or stdio MCP transport must delegate to the read-only facade without adding job execution. GitHub branch protection, dependency graph availability, required status checks, and CODEOWNERS-required review must be enabled in repository settings before remote enforcement is claimed.

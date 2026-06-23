@@ -10,6 +10,9 @@ if str(REPO_ROOT) not in sys.path:
 from masterblaster_control.p0_acceptance import acceptance_summary, list_acceptance_criteria
 from masterblaster_control.p0_resources import list_resources
 from masterblaster_control.runner_simulator import MANIFESTS
+from scripts.generate_sbom import DEFAULT_OUTPUT, check_sbom
+from scripts.scan_prohibited_capabilities import scan_paths
+from scripts.validate_governance import validate_governance
 
 
 def main() -> int:
@@ -30,6 +33,27 @@ def main() -> int:
 
     print(f"Validated {len(MANIFESTS)} reviewed manifest(s).")
     print(f"Validated {len(resources)} non-executing resource(s).")
+
+    sbom_errors = check_sbom(DEFAULT_OUTPUT, REPO_ROOT)
+    if sbom_errors:
+        raise SystemExit("; ".join(sbom_errors))
+    print("Validated deterministic SPDX SBOM.")
+
+    governance_errors = validate_governance(REPO_ROOT)
+    if governance_errors:
+        raise SystemExit("; ".join(governance_errors))
+    print("Validated security review governance artifacts.")
+
+    prohibited_findings = scan_paths(
+        (
+            REPO_ROOT / "masterblaster_control",
+            REPO_ROOT / "scripts",
+            REPO_ROOT / "tests",
+        )
+    )
+    if prohibited_findings:
+        raise SystemExit("; ".join(finding.format(REPO_ROOT) for finding in prohibited_findings))
+    print("Validated absence of prohibited Python execution/network primitives.")
 
     criteria = list_acceptance_criteria()
     summary = acceptance_summary()

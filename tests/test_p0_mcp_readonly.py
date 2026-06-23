@@ -1,5 +1,8 @@
+import inspect
+
 import pytest
 
+from masterblaster_control import p0_mcp_readonly
 from masterblaster_control.p0_mcp_readonly import P0ReadOnlyMCPFacade, UnknownReadOnlyToolError
 from masterblaster_control.p0_storage import P0Storage
 
@@ -53,3 +56,10 @@ def test_report_draft_is_non_certifying_and_uses_storage_snapshot():
     assert "simulator draft only" in result.body
     assert "Tenants: 0" in result.body
     assert "P1 gate" in result.body
+
+
+def test_readonly_facade_does_not_import_runner_simulator():
+    source = inspect.getsource(p0_mcp_readonly)
+
+    assert "RunnerSimulator" not in source
+    assert "runner_simulator" not in source

@@ -92,9 +92,12 @@ def main() -> int:
         f"overall={summary.overall_percent}%, p1_gate={summary.p1_gate_percent}%, "
         f"blockers={len(summary.p1_blockers)}"
     )
-    print("Top P1 blockers:")
-    for blocker in summary.p1_blockers[:5]:
-        print(f"- {blocker}")
+    if summary.p1_blockers:
+        print("Top P1 blockers:")
+        for blocker in summary.p1_blockers[:5]:
+            print(f"- {blocker}")
+    else:
+        print("P1 gate criteria are complete. Enable branch protection and CODEOWNERS-required review in GitHub settings before claiming remote enforcement.")
     storage.close()
     return 0
 

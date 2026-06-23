@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+from types import MappingProxyType
 from typing import Any, Mapping
 
 from .p0_approvals import validate_approval
@@ -26,7 +27,7 @@ from .p0_policy import (
     validate_job_envelope,
 )
 
-MANIFESTS: dict[str, AdapterManifest] = {
+_MANIFESTS: dict[str, AdapterManifest] = {
     "a0.fixture.inventory": AdapterManifest(
         adapter_id="a0.fixture.inventory",
         name="A0 Fixture Inventory",
@@ -54,6 +55,8 @@ MANIFESTS: dict[str, AdapterManifest] = {
         description="Exercises the TLS parser behind a fake transport for tests and demos.",
     ),
 }
+
+MANIFESTS: Mapping[str, AdapterManifest] = MappingProxyType(_MANIFESTS)
 
 
 @dataclass(frozen=True)

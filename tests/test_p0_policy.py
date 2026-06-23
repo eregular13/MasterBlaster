@@ -1,6 +1,8 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from masterblaster_control.p0_approvals import approve_request, request_approval
 from masterblaster_control.p0_models import Engagement, RulesOfEngagement, ScopeTarget
 from masterblaster_control.p0_policy import (
@@ -12,6 +14,7 @@ from masterblaster_control.p0_policy import (
     REASON_UNKNOWN_ADAPTER,
     REASON_UNKNOWN_ARGUMENT,
     evaluate_policy,
+    parse_target,
     sign_job_envelope,
     validate_job_envelope,
 )
@@ -55,6 +58,17 @@ def test_tls_adapter_rejects_ip_target_type():
 
     assert decision.allowed is False
     assert decision.reason_code == REASON_TARGET_TYPE
+
+
+def test_url_targets_reject_secret_or_ambiguous_components():
+    for target in (
+        "https://user@example.com/",
+        "https://user:password@example.com/",
+        "https://example.com/path?token=abc123",
+        "https://example.com/path#fragment",
+    ):
+        with pytest.raises(Exception, match="URL targets must not include"):
+            parse_target(target)
 
 
 def test_expired_engagement_is_denied():

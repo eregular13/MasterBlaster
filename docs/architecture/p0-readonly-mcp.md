@@ -29,3 +29,12 @@ Unknown tool names fail closed with `UnknownReadOnlyToolError`. Draft tools are 
 ## Safety Boundary
 
 The facade is not a trusted authorization boundary. It reads deterministic resources and local storage summaries only. Any future MCP server must delegate to this facade and must not add runnable tools until P0 acceptance gates are complete.
+
+## Regression Coverage
+
+`tests/test_p0_mcp_readonly.py` verifies that:
+
+- descriptors are marked non-executing;
+- unknown read-only tool names fail closed;
+- generated drafts retain simulator-only disclaimers;
+- the facade does not import `RunnerSimulator` or `runner_simulator`.

@@ -2,11 +2,11 @@
 
 This checklist gates discussion of any A2/A3 live capability. The source of truth is `masterblaster_control/p0_acceptance.py`; this document mirrors the current criteria and evidence links.
 
-- Overall reference completion: 82%
-- P1 gate completion: 89%
-- Complete: 17
+- Overall reference completion: 91%
+- P1 gate completion: 100%
+- Complete: 19
 - Partial: 3
-- Not started: 2
+- Not started: 0
 
 | Criterion | Status | % | P1 Gate | Evidence | Next Action |
 | --- | --- | ---: | --- | --- | --- |
@@ -28,8 +28,8 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 | Tenant/client/engagement management UI over storage | partial | 35% | no | `masterblaster_control/p0_storage.py` | Add a read-only browser, then controlled create/edit forms. |
 | MCP read-only wrapper for resources and draft tools | complete | 100% | yes | `masterblaster_control/p0_mcp_readonly.py`, `tests/test_p0_mcp_readonly.py`, `docs/architecture/p0-readonly-mcp.md` | Wrap the facade with an actual MCP transport after CI and review policy land. |
 | Additional fixture adapters and parser scenarios | partial | 30% | no | `masterblaster_control/runner_simulator.py` | Add HTTP headers, DNS posture, and certificate-expiry fixture scenarios. |
-| CI workflow for tests, dependency review, and SBOM stubs | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add GitHub Actions workflow plus generated SBOM placeholder. |
-| Review policy for security-sensitive files | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add CODEOWNERS-style policy documentation. |
+| CI workflow for tests, dependency review, and SBOM stubs | complete | 100% | yes | `.github/workflows/p0-verification.yml`, `.github/workflows/dependency-review.yml`, `scripts/generate_sbom.py`, `sbom/masterblaster-p0.spdx.json`, `tests/test_sbom_generation.py`, `docs/supply-chain/sbom-and-dependency-review.md` | Enable dependency graph and required workflow checks in GitHub repository settings. |
+| Review policy for security-sensitive files | complete | 100% | yes | `.github/CODEOWNERS`, `.github/pull_request_template.md`, `policy/security-sensitive-paths.json`, `scripts/validate_governance.py`, `tests/test_governance_review_policy.py`, `docs/governance/security-review-policy.md` | Enable CODEOWNERS-required review and branch protection in GitHub repository settings. |
 | Storage retention and redaction policy | complete | 100% | yes | `masterblaster_control/p0_retention.py`, `masterblaster_control/p0_storage.py`, `tests/test_p0_retention.py`, `tests/test_p0_storage.py` | Add per-engagement retention overrides after management UI exists. |
 | Rich audit and evidence browser in Qt UI | partial | 40% | no | `masterblaster_control/main_window.py` | Add filterable audit/evidence table widgets. |
 
@@ -40,4 +40,4 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 - No arbitrary shell or user-supplied raw CLI arguments.
 - No claims of compliance certification from simulator output.
 - No adapter without a reviewed manifest and tests.
-- CI/SBOM and review policy must be completed.
+- GitHub repository settings must enforce required checks and CODEOWNERS review before production governance claims.

@@ -56,6 +56,10 @@ def parse_target(raw: str) -> tuple[str, str, str | None]:
     if parsed.scheme:
         if parsed.scheme not in {"http", "https"} or not parsed.hostname:
             raise TargetParseError("only http and https URLs with hostnames are accepted")
+        if parsed.username or parsed.password:
+            raise TargetParseError("URL targets must not include userinfo or credentials")
+        if parsed.query or parsed.fragment:
+            raise TargetParseError("URL targets must not include query strings or fragments")
         host = parsed.hostname.lower()
         port = f":{parsed.port}" if parsed.port else ""
         path = parsed.path or "/"
