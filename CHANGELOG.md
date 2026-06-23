@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0] - 2026-06-22
+
+### Added
+- Professional business layer: client/project management, engagement templates, assessment pipelines
+- Client-facing report generator with executive summary, severity ratings, remediation, compliance appendix
+- Findings-to-proposal generator for consulting upsell workflows
+- Usage logging and billing CSV export
+- CRM-friendly findings CSV and report JSON export
+- Clients & Projects UI tab with one-click report and proposal generation
+- Firm branding configuration (`data/business/firm_config.json`)
+- CLI: `scripts/generate_client_report.py`
+
+### Changed
+- README and ethics rewritten for professional consulting use case
+- UI rebranded for enterprise assessment workflows (Deliverables menu, professional terminology)
+
+[1.1.0]: https://github.com/eregular13/MasterBlaster/releases/tag/v1.1.0
+
 ## [1.0.0-warlord] - 2026-06-22
 
 ### Added

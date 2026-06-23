@@ -1,96 +1,64 @@
 <div align="center">
 
-# ⚔ MASTERBLASTER WARLORD v1.0
-### One Interface. 22 MCPs. Total Domination.
+# MasterBlaster
+### Security Assessment Control Plane for Professional Services Firms
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
-[![MCPs](https://img.shields.io/badge/MCPs-22-darkred.svg)](https://github.com/eregular13/MasterBlaster)
-[![Tools](https://img.shields.io/badge/Kali--Grade%20Tools-66%2B-black.svg)](https://github.com/eregular13/MasterBlaster)
-[![Chain](https://img.shields.io/badge/Assault%20Chain-8%20MCPs%20default-brightgreen.svg)](https://github.com/eregular13/MasterBlaster)
-[![UI](https://img.shields.io/badge/Command%20Plane-Qt%20Warlord-red.svg)](https://github.com/eregular13/MasterBlaster)
-[![API](https://img.shields.io/badge/MCP%20API-stdio%20%2B%20HTTP-orange.svg)](https://github.com/eregular13/MasterBlaster)
-[![Branch](https://img.shields.io/badge/Branch-grokier%2Fmasterblaster-critical.svg)](https://github.com/eregular13/MasterBlaster/tree/grokier/masterblaster)
-[![Stars](https://img.shields.io/github/stars/eregular13/MasterBlaster?style=social)](https://github.com/eregular13/MasterBlaster)
+[![MCPs](https://img.shields.io/badge/MCP%20Orchestration-22-blue.svg)](https://github.com/eregular13/MasterBlaster)
+[![Engagements](https://img.shields.io/badge/Engagement%20Templates-4-green.svg)](https://github.com/eregular13/MasterBlaster)
+[![Branch](https://img.shields.io/badge/Branch-grokier%2Fmasterblaster-blue.svg)](https://github.com/eregular13/MasterBlaster/tree/grokier/masterblaster)
 
-**The iron fist that cracks the whip on 22 Master Control Programs — forcing nmap, nuclei, sqlmap, ffuf, burp, metasploit-class wrappers, and the full Kali arsenal to execute, chain, coordinate, and surrender evidence.**
+**Orchestrate 22 MCPs to deliver high-quality penetration tests, application security assessments, and bug bounty sprints — in days, not weeks.**
 
-**This is the control plane that makes scattered tooling kneel.**
+**Built for $10K–$50K engagements with professional deliverables, audit trails, and consulting upsell workflows.**
 
-[💀 Crack the Whip](#-crack-the-whip--savage-demo) • [🎯 22 MCP Arsenal](#-22-mcp-arsenal--tool-bindings) • [🏗️ Architecture](#️-warlord-architecture) • [🚀 Deploy](#-deploy-in-60-seconds) • [⚖️ Doctrine](#️-warlord-doctrine)
+[Capabilities](#capabilities) · [Engagement Templates](#engagement-templates) · [Client Workflow](#client-workflow) · [Deploy](#deploy) · [Governance](#governance)
 
 </div>
 
 ---
 
-## 🔥 What Is MasterBlaster WARLORD?
+## Business Value
 
-Forget juggling 50 terminal tabs. MasterBlaster is a **fearsome GUI + API command plane** that dominates **22 MCPs** like a warlord commanding an army:
+MasterBlaster is a **monetizable control plane** for cybersecurity consulting firms. It compresses assessment delivery timelines, standardizes methodology across consultants, and produces client-ready outputs that drive follow-on revenue.
 
-| You Get | What It Does |
+| Outcome | How MasterBlaster Delivers |
 | --- | --- |
-| **22 MCP slots** | Recon, network, web, cloud, binary, API, evidence — all leashed to one throne |
-| **17+ Kali wrappers** | nmap · nuclei · sqlmap · ffuf · burp · hydra · gobuster · metasploit · subfinder · masscan · … |
-| **CRACK THE WHIP button** | Big red warlord deck — all 22 MCPs in one registry queue |
-| **Total Annihilation Mode** | Zero-delay strikes + tool barrage per MCP hit |
-| **Tool Arsenal tab** | One-click UNLEASH presets for every governed blade |
-| **War Packs** | 7 pre-configured community toolchains in marketplace |
-| **Assault chains** | 8-MCP fast strike · 12-MCP full assault · 22-MCP total domination |
-| **Evidence capture** | Signed jobs, SHA-256 evidence, audit trail — every hit logged |
-| **Human approval gate** | You rule the engagement; MasterBlaster enforces scope |
-| **AI + MCP API** | Claude, Cursor, Copilot drive the same war machine via stdio/HTTP |
-
-> **Smart governance, savage execution:** Authorized engagements only. Scope-locked targets. Operator approval on every strike. Full audit trail. No chaos — **controlled domination**.
+| **Faster delivery** | Template-driven MCP pipelines automate recon → scanning → evidence collection |
+| **Higher margins** | Repeatable workflows reduce senior consultant hours per engagement |
+| **Professional deliverables** | Branded reports with executive summary, severity ratings, remediation guidance |
+| **Revenue expansion** | Findings-to-proposal generator surfaces remediation, monitoring, and compliance upsells |
+| **Enterprise readiness** | RBAC, audit logs, usage metering, CRM/billing exports, compliance appendices |
 
 ---
 
-## 📊 Warlord Stats
+## Capabilities
 
-| Metric | Value |
-| --- | ---: |
-| **Master Control Programs** | **22** |
-| **Kali tool wrappers** | **17+** |
-| **Tool binding references** | **67+** |
-| **Registry queue** | **22 MCPs** |
-| **War Packs** | **7** |
-| **Policy gate speed** | **< 5ms** |
-| **Automated tests** | **140+** |
-| **MCP API transports** | stdio + HTTP |
-
----
-
-## 🏗️ Warlord Architecture
-
-```mermaid
-%%{init: {"themeVariables": {"primaryColor": "#8b0000", "fontFamily": "monospace"}}}%%
-graph TD
-    W[Warlord Operator] -->|GUI| MB[MasterBlaster Command Plane]
-    AI[AI Agent] -->|MCP API| MB
-
-    MB --> WHIP[Warlord Orchestrator]
-    MB --> MCP22[22 MCP Registry]
-    MB --> TOOLS[Kali Tool Arsenal]
-
-    WHIP --> C1[subfinder → nmap → nuclei → sqlmap → evidence]
-
-    MCP22 --> R[Recon MCPs]
-    MCP22 --> N[Network MCPs]
-    MCP22 --> WEB[Web MCPs]
-    MCP22 --> CLD[Cloud MCPs]
-
-    TOOLS --> K[nmap · nuclei · sqlmap · ffuf · burp · metasploit · …]
-
-    MB --> GOV[Scope · Approval · Signing · Audit]
-
-    style MB fill:#8b0000,stroke:#ffd700,stroke-width:3px,color:#fff
-    style WHIP fill:#ff4444,stroke:#000,color:#fff
-    style GOV fill:#333,stroke:#ffd700,color:#fff
-```
+| Module | Function |
+| --- | --- |
+| **22 MCP orchestration** | Recon, network, web, cloud, binary, API, and evidence compilation |
+| **Engagement templates** | External pentest, web appsec, bug bounty sprint, comprehensive assessment |
+| **Client & project management** | Scoped engagements with contract value tracking |
+| **Assessment pipelines** | Automated multi-MCP execution with usage logging |
+| **Professional reporting** | Markdown/PDF-ready reports with SOC 2, ISO 27001, PCI mapping |
+| **Findings → Proposal** | One-click consulting proposal from assessment findings |
+| **Tool integrations** | Governed wrappers for nmap, nuclei, sqlmap, ffuf, burp, and related tooling |
+| **Billing hooks** | Usage event logging with CSV export for finance systems |
 
 ---
 
-## 💀 Crack the Whip — Savage Demo
+## Engagement Templates
 
-**8-MCP assault chain** (fast strike) or **12-MCP full assault** (total domination):
+| Template | Typical Value | Duration | Pipeline Steps |
+| --- | --- | --- | ---: |
+| External Network Pentest | $15K – $35K | 3–7 days | 6 |
+| Web Application Security | $12K – $40K | 5–10 days | 8 |
+| Bug Bounty Sprint | $10K – $25K | 2–5 days | 12 |
+| Comprehensive Assessment | $35K – $50K | 7–14 days | 22 |
+
+---
+
+## Client Workflow
 
 ```bash
 git clone https://github.com/eregular13/MasterBlaster.git
@@ -98,130 +66,44 @@ cd MasterBlaster
 git checkout grokier/masterblaster
 pip install -r requirements.txt
 
-# Fast strike — 8 MCPs
-python scripts/demo_warlord_chain.py example.com
-
-# Full assault — 12 MCPs, 30+ tools chained
-python scripts/demo_warlord_full_chain.py example.com
-
-# Total domination — all 22 MCPs in registry order
-python scripts/demo_warlord_registry_queue.py example.com
-
-# Unleash Kali blades through MCP governors
-python scripts/unleash_arsenal.py example.com --tool nmap --preset syn-top
-python scripts/unleash_arsenal.py example.com --category Web --all
-```
-
-**Sample chain:**
-
-| Step | MCP | Tools Deployed |
-| ---: | --- | --- |
-| 1 | `mcp.recon.subdomain` | subfinder, amass, assetfinder |
-| 2 | `a5.port.scan_sim` | nmap, rustscan, masscan |
-| 3 | `mcp.network.service` | nmap, nmap-scripts, netexec |
-| 4 | `a6.web.crawl_sim` | katana, gau, hakrawler |
-| 5 | `mcp.web.fuzzer` | ffuf, feroxbuster, gobuster, **nuclei** |
-| 6 | `mcp.web.inject` | **sqlmap**, commix, dalfox |
-| 7 | `mcp.api.rest` | **burp**, postman, arjun |
-| 8 | `mcp.evidence.compiler` | faraday, dradis, plextrac |
-
-```bash
-# Launch the command plane
+# Create project and run assessment pipeline
 python main.py
-# Warlord menu → Crack Full Assault Chain (12 MCPs) | Export chain report
-# Guardrails → "Crack Assault Chain (8)" | "Crack Full Chain (12)" | "Kali Tool Bindings"
+# Clients & Projects → Create Project → Run Assessment Pipeline → Generate Client Report
+
+# CLI report generation
+python scripts/generate_client_report.py --client "Acme Corp" --project "Q2 Pentest" --proposal --csv
+
+# Full 22-MCP assessment
+python scripts/demo_warlord_registry_queue.py example.com
 ```
 
 ---
 
-## 🎯 22 MCP Arsenal — Tool Bindings
-
-| # | MCP | Tools Under the Whip |
-| ---: | --- | --- |
-| 01 | `a0.fixture.inventory` | amass, theharvester, assetfinder |
-| 02 | `a1.tls.assessment` | testssl.sh, sslscan, sslyze |
-| 03 | `a2.dns.posture` | dig, dnsenum, fierce |
-| 04 | `a3.http.headers` | curl, httpx, whatweb |
-| 05 | `a4.tls.cert_expiry` | openssl, certigo, crt.sh |
-| 06 | `a5.port.scan_sim` | **nmap**, rustscan, masscan |
-| 07 | `a6.web.crawl_sim` | katana, gau, hakrawler |
-| 08 | `a7.live.probe` | naabu, httprobe, tlsx |
-| 09 | `mcp.recon.osint` | maltego, recon-ng, spiderfoot |
-| 10 | `mcp.recon.subdomain` | subfinder, amass, assetfinder |
-| 11 | `mcp.network.service` | nmap, nmap-scripts, netexec |
-| 12 | `mcp.network.path` | traceroute, mtr, hping3 |
-| 13 | `mcp.web.fuzzer` | **ffuf**, feroxbuster, gobuster, **nuclei** |
-| 14 | `mcp.web.inject` | **sqlmap**, commix, dalfox |
-| 15 | `mcp.web.auth` | **hydra**, medusa, patator |
-| 16 | `mcp.cloud.iam` | prowler, scout-suite, pacu |
-| 17 | `mcp.cloud.storage` | trivy, s3scanner, cloudmapper |
-| 18 | `mcp.binary.static` | ghidra, radare2, binwalk |
-| 19 | `mcp.binary.dynamic` | gdb, strace, **metasploit** |
-| 20 | `mcp.api.rest` | **burp**, postman, arjun |
-| 21 | `mcp.api.graphql` | graphql-voyager, inql, clairvoyance |
-| 22 | `mcp.evidence.compiler` | faraday, dradis, plextrac |
-
----
-
-## 🚀 Deploy in 60 Seconds
+## Deploy
 
 ```bash
 python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt
 python -m pytest -q
-python scripts/validate_mcp_catalog.py
 python main.py
 ```
 
-**MCP API for AI warlords:**
-
-```bash
-python scripts/mcp_http_server.py --port 8765
-curl http://127.0.0.1:8765/health
-```
+Configure firm branding in `data/business/firm_config.json` (company name, report watermark, hourly rate).
 
 ---
 
-## ⚙️ Power Features
+## Governance
 
-- **CRACK THE WHIP** — big red button deploys all 22 MCPs with live strike counter + success pulse
-- **Total Annihilation Mode** — zero-delay registry queue + tool preset barrage per MCP
-- **Tool Arsenal tab** — 17 Kali wrappers with UNLEASH presets (nmap, nuclei, sqlmap, ffuf, burp, …)
-- **CLI `unleash_arsenal.py`** — `--tool`, `--preset`, `--category`, `--all` flags
-- **War Packs marketplace** — Recon Blitz, Web Annihilation, Total Domination, and more
-- **Assault chains** — 8 / 12 / 22 MCP orchestrated strikes with evidence capture
-- **Records + evidence vault** — every blade hashed, signed, and stored
+MasterBlaster requires **signed rules of engagement** for all assessment activity. Scope-locked targets, human approval gates, signed job envelopes, and immutable audit trails support enterprise client requirements.
 
----
-
-## ⚖️ Warlord Doctrine
-
-Authorized engagements **only**. You own the targets. MasterBlaster owns the orchestration.
-
-- Scope-locked strikes — out-of-scope targets get crushed at the policy gate
-- Human approval on every MCP deployment
-- Signed job envelopes + immutable evidence
-- Full audit trail for client deliverables
-
-Read the full doctrine: [ethics.md](ethics.md)
-
----
-
-## ⭐ Star This If You Want One Throne for 22 MCPs
-
-```bash
-git checkout grokier/masterblaster
-python scripts/demo_warlord_chain.py
-```
-
-**Fork it. Bind your tools. Crack the whip. Conquer your authorized scope.**
+Read the full policy: [ethics.md](ethics.md)
 
 ---
 
 <div align="center">
 
-**MASTERBLASTER WARLORD** — *The control plane that makes Kali kneel.*
+**MasterBlaster** — *Deliver faster. Report professionally. Grow consulting revenue.*
 
-`grokier/masterblaster` · Built to dominate.
+`grokier/masterblaster`
 
 </div>

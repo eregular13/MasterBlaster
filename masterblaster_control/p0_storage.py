@@ -13,7 +13,7 @@ from .p0_policy import canonical_json
 from .p0_retention import RetentionPolicy, RetentionResult, redact_for_storage, retention_cutoff
 from .runner_simulator import RunnerResult
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -82,6 +82,13 @@ class P0Storage:
             connection.execute(
                 "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
                 (2, _utc_timestamp()),
+            )
+            current_version = 2
+        if current_version < 3:
+            connection.executescript(_MIGRATION_003)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+                (3, _utc_timestamp()),
             )
         if self._current_schema_version(connection) != SCHEMA_VERSION:
             raise RuntimeError("P0 storage schema version mismatch")
@@ -449,6 +456,60 @@ class P0Storage:
         records = self.list_evidence(limit=limit)
         return json.dumps(records, indent=2, sort_keys=True) + "\n"
 
+    def ensure_usage_schema(self) -> None:
+        self.initialize()
+
+    def insert_usage_event(self, event: dict[str, Any]) -> None:
+        self.initialize()
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO usage_events(
+                    event_id, tenant_id, client_id, engagement_id, event_type,
+                    quantity, unit, metadata_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event["event_id"],
+                    event["tenant_id"],
+                    event["client_id"],
+                    event["engagement_id"],
+                    event["event_type"],
+                    float(event["quantity"]),
+                    event["unit"],
+                    _json(event.get("metadata", {})),
+                    event["created_at"],
+                ),
+            )
+
+    def list_usage_events(
+        self,
+        *,
+        engagement_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT event_id, tenant_id, client_id, engagement_id, event_type,
+                   quantity, unit, metadata_json, created_at
+            FROM usage_events
+        """
+        params: list[Any] = []
+        if engagement_id:
+            query += " WHERE engagement_id = ?"
+            params.append(engagement_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        rows = []
+        for row in cursor.fetchall():
+            item = dict(row)
+            if item.get("metadata_json"):
+                item["metadata"] = json.loads(item.pop("metadata_json"))
+            rows.append(item)
+        return rows
+
     def close(self) -> None:
         if self._connection is not None:
             self._connection.close()
@@ -646,6 +707,20 @@ CREATE TABLE report_drafts (
     evidence_ids_json TEXT NOT NULL,
     finding_ids_json TEXT NOT NULL,
     status TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+"""
+
+_MIGRATION_003 = """
+CREATE TABLE IF NOT EXISTS usage_events (
+    event_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    engagement_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
 """

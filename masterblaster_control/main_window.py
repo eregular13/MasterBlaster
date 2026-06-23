@@ -56,6 +56,7 @@ from .warlord_orchestrator import (
 from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN, FULL_REGISTRY_QUEUE
 from .kali_tool_wrappers import KALI_TOOL_REGISTRY, tool_arsenal_markdown, unleash_tool
 from .tool_arsenal_tab import ToolArsenalTab
+from .client_projects_tab import ClientProjectsTab
 from .p4_security import KeyStore, RBAC
 from .p8_auth import LocalAuthStore
 from .p8_workflow_assistant import assistant_markdown
@@ -121,7 +122,7 @@ class DashboardCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MasterBlaster WARLORD — 22 MCP Command Plane")
+        self.setWindowTitle("MasterBlaster — Security Assessment Control Plane")
         self.resize(1250, 820)
 
         self.settings = QSettings("MasterBlaster", "P0Simulator")
@@ -153,20 +154,20 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._apply_dark_theme()
         self._check_ethics()
-        self._update_status("Warlord online — 22 MCPs leashed. Crack the whip on authorized targets.")
+        self._update_status("Ready — 22 MCP orchestration for authorized client engagements.")
 
     def _init_ui(self):
         top_bar = QWidget()
         top_layout = QHBoxLayout(top_bar)
         top_layout.setContentsMargins(10, 5, 10, 5)
 
-        logo = QLabel("⚔ MasterBlaster WARLORD")
+        logo = QLabel("MasterBlaster")
         logo.setFont(QFont("Consolas", 18, QFont.Weight.Bold))
-        logo.setStyleSheet("color: #ff4444;")
+        logo.setStyleSheet("color: #00a8e8;")
         top_layout.addWidget(logo)
 
-        badge = QLabel("SCOPE LOCKED · WHIP READY")
-        badge.setStyleSheet("background: #8b0000; color: #ffd700; padding: 2px 8px; border-radius: 3px; font-weight: bold;")
+        badge = QLabel("AUTHORIZED SCOPE · 22 MCPs")
+        badge.setStyleSheet("background: #1e3a5f; color: #e8f4fc; padding: 2px 8px; border-radius: 3px; font-weight: bold;")
         top_layout.addWidget(badge)
 
         self.target_edit = QLineEdit()
@@ -199,13 +200,15 @@ class MainWindow(QMainWindow):
         file_menu.addAction("Export Workflow Draft (Markdown)", self._export_workflow_md)
         file_menu.addAction("Export Assistant Enrichment (Markdown)", self._export_assistant_md)
         file_menu.addSeparator()
-        warlord_menu = self.menuBar().addMenu("&Warlord")
-        warlord_menu.addAction("Crack Assault Chain (8 MCPs)", self._crack_assault_chain)
-        warlord_menu.addAction("Crack Full Assault Chain (12 MCPs)", self._crack_full_assault_chain)
-        warlord_menu.addAction("Crack Registry Queue (22 MCPs)", self._run_all_mcps)
-        warlord_menu.addAction("Export Warlord Chain Report (Markdown)", self._export_warlord_chain_md)
-        warlord_menu.addAction("Export Registry Queue Report (Markdown)", self._export_registry_queue_md)
-        warlord_menu.addAction("Export Warlord Chain Telemetry (JSON)", self._export_warlord_chain_json)
+        deliverables_menu = self.menuBar().addMenu("&Deliverables")
+        deliverables_menu.addAction("Run Standard Pipeline (8 MCPs)", self._crack_assault_chain)
+        deliverables_menu.addAction("Run Extended Pipeline (12 MCPs)", self._crack_full_assault_chain)
+        deliverables_menu.addAction("Run Full Assessment (22 MCPs)", self._run_all_mcps)
+        deliverables_menu.addAction("Export Pipeline Report (Markdown)", self._export_warlord_chain_md)
+        deliverables_menu.addAction("Export Full Assessment Report (Markdown)", self._export_registry_queue_md)
+        deliverables_menu.addAction("Export Pipeline Telemetry (JSON)", self._export_warlord_chain_json)
+        deliverables_menu.addSeparator()
+        deliverables_menu.addAction("Open Client & Projects Tab", self._open_client_projects)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
         exit_action = QAction("Exit", self)
@@ -252,11 +255,14 @@ class MainWindow(QMainWindow):
             self.mcp_tab_widgets[mcp["id"]] = tab
             self.main_tabs.addTab(tab, mcp["name"])
 
+        self.client_projects_tab = ClientProjectsTab(self)
+        self.main_tabs.addTab(self.client_projects_tab, "Clients & Projects")
+
         self.tool_arsenal_tab = ToolArsenalTab(self)
-        self.main_tabs.addTab(self.tool_arsenal_tab, "Tool Arsenal")
+        self.main_tabs.addTab(self.tool_arsenal_tab, "Tool Integrations")
 
         self.mb_bridge = MasterBlasterBridge(self)
-        self.main_tabs.addTab(self.mb_bridge, "Command Post")
+        self.main_tabs.addTab(self.mb_bridge, "Operations")
 
         self.storage_browser = StorageBrowser(self.storage, self)
         self.main_tabs.addTab(self.storage_browser, "Records")
@@ -346,12 +352,12 @@ class MainWindow(QMainWindow):
 
     def _show_ethics_dialog(self, force=False):
         msg = QMessageBox(self)
-        msg.setWindowTitle("Warlord Authorization Doctrine")
+        msg.setWindowTitle("Authorization & Rules of Engagement")
         msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(
-            "MasterBlaster WARLORD commands 22 MCPs and full Kali-grade toolchains.\n\n"
-            "You may only deploy against targets you are explicitly authorized to assess. "
-            "Every strike is scope-bound, approval-gated, signed, and logged.\n\n"
+            "MasterBlaster orchestrates 22 MCPs for professional security assessments.\n\n"
+            "You may only assess targets covered by a signed rules-of-engagement document. "
+            "All activity is scope-bound, approval-gated, signed, and audit-logged.\n\n"
             "Accept the doctrine and enter the command plane?"
         )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
@@ -369,7 +375,7 @@ class MainWindow(QMainWindow):
         lay = QHBoxLayout(deck)
         lay.setContentsMargins(12, 8, 12, 8)
 
-        self.whip_btn = QPushButton("⚔  CRACK THE WHIP  —  22 MCPs")
+        self.whip_btn = QPushButton("RUN FULL ASSESSMENT — 22 MCPs")
         self.whip_btn.setStyleSheet(warlord_whip_button_style())
         self.whip_btn.setMinimumHeight(48)
         self.whip_btn.clicked.connect(self._run_all_mcps)
@@ -377,7 +383,7 @@ class MainWindow(QMainWindow):
         self.run_all_btn = self.whip_btn
 
         annihilation_box = QVBoxLayout()
-        self.annihilation_toggle = QCheckBox("TOTAL ANNIHILATION MODE")
+        self.annihilation_toggle = QCheckBox("RAPID EXECUTION MODE")
         self.annihilation_toggle.setStyleSheet(annihilation_toggle_style())
         self.annihilation_toggle.setToolTip(
             "Zero-delay registry queue + tool preset barrage after every MCP strike."
@@ -771,6 +777,9 @@ class MainWindow(QMainWindow):
     def _switch_to_masterblaster_bridge(self):
         self.main_tabs.setCurrentWidget(self.mb_bridge)
 
+    def _open_client_projects(self):
+        self.main_tabs.setCurrentWidget(self.client_projects_tab)
+
     def _export_all_reports(self):
         content = [
             "# MasterBlaster P0 Report Draft",
@@ -992,10 +1001,11 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             "About",
-            "MasterBlaster WARLORD — 22 MCP Command Plane\n\n"
-            "One interface. 22 MCPs. Total domination.\n\n"
-            "Orchestrate nmap, nuclei, sqlmap, ffuf, metasploit-class wrappers, and the full "
-            "arsenal through chained assault workflows — governed, approved, evidence-captured.",
+            "MasterBlaster — Security Assessment Control Plane\n\n"
+            "Professional orchestration for penetration testing, application security, "
+            "and bug bounty engagements.\n\n"
+            "22 MCPs · Client project management · Branded reports · Usage billing · "
+            "Findings-to-proposal workflow.",
         )
 
     def _storage_snapshot_text(self):
