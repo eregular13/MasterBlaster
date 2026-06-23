@@ -1,86 +1,62 @@
-# MasterBlaster-Control • Kali MCP Nexus v1.1 (Usable Orchestration Control Plane)
+# MasterBlaster P0 Authorized Assessment Simulator
 
-Professional desktop GUI Control Plane that orchestrates the 20+ MCPs from the MasterBlaster engine.
+MasterBlaster is being narrowed into an authorized security assessment control plane. The current implementation is a Phase P0 simulator: it validates reviewed adapter manifests, deterministic target scope, signed expiring job envelopes, and hashed fixture evidence without running live tools or touching targets.
 
-## Features (v1.1 - Usable Product)
-- Full PySide6 (Qt6) dark Kali-themed GUI
-- 22 MCP tabs + expandable slots with parameter forms
-- **Live Dashboard Cards**: All MCPs shown, real-time Idle/Running/Success/Failed/Stopped, color coding, progress bars. Clickable to jump to tab.
-- **Functional Run All MCPs**: Sequential execution (completion-driven, not timers). Live card updates + aggregated results.
-- **Global Stop All**: Cleanly terminates running processes, aborts batches/workflows, updates UI/cards.
-- **Functional Workflow Builder**: Add/reorder/remove MCPs in right panel. Execute Chain runs in order with live status, logs, intel.
-- Per-MCP **Stop** button + robust QProcess handling.
-- **Demo-safe execution**: If Kali tools missing (Windows dev etc.), realistic simulated outputs per MCP type with parsed intel (ports, vulns, creds, etc.).
-- Universal log + Target Intel panel with automatic aggregation.
-- Evidence collector + full Export (menu) with watermarked Markdown reports.
-- “Verify & Install All Kali Tools” button (real PATH check + demo notes).
-- Ethics & legal banner + watermark toggle in Settings.
-- Polish: status bar, global target sync across tabs, button state management.
+## Current P0 Capabilities
 
-## Tech Stack
-- Primary: Python 3.12 + PySide6 (Qt6) native desktop GUI (dark Kali theme)
-- Execution: subprocess + QProcess + embedded terminal panes
-- Interoperability: git submodule for MasterBlaster + Python import or CLI calls
-- Database: SQLite + optional export to Dradis
-- Packaging: PyInstaller one-click .deb + AppImage ready
+- Reviewed adapter manifest registry with deny-by-default lookup.
+- Deterministic target parsing for host, domain, IP, CIDR, and HTTP(S) URL inputs.
+- Scope and rules-of-engagement policy decisions with stable reason codes.
+- Signed, expiring, tenant-bound, client-bound, engagement-bound, target-bound, and adapter-bound job envelopes.
+- Runner simulator that independently validates policy and job signatures before emitting fixture evidence.
+- One offline A0 fixture inventory adapter.
+- One A1 TLS assessment adapter using a fake transport only.
+- Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
+- Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
 
-## Kali Tools
-All tools are from standard Kali Linux 2026 repositories.
+## Non-Goals in P0
 
-Use the "Verify & Install All Kali Tools" button or run:
+P0 does not install Kali tools, execute host commands, launch submodule scripts, scan networks, exploit services, brute-force credentials, collect secrets, or claim compliance. Unknown adapters, targets, arguments, and expired authorizations are denied.
+
+## Quick Start
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+
+Run the non-network test suite:
+
+```bash
+python -m pytest
+```
+
+Validate reviewed manifests from a shell:
 
 ```bash
 ./scripts/verify_kali_tools.sh
 ```
 
-## Quick Start
+The script name is retained for compatibility, but it now validates P0 manifests only. It does not install packages.
 
-```bash
-git clone https://github.com/eregular13/MasterBlaster.git
-cd MasterBlaster
-git submodule update --init --recursive
-pip install pyside6 pyyaml
-python main.py
-```
+## Adapter Manifests
 
-**Note**: Runs on any OS. On non-Kali hosts, missing tools auto-use realistic demo/simulated output so you can test the full orchestration, dashboard, Run All, Workflows, Stop, and exports immediately.
+The reviewed P0 manifests live in `masterblaster_control/runner_simulator.py`:
 
-See the full push sequence in the generation.
+- `a0.fixture.inventory`: offline fixture parser, no network transport.
+- `a1.tls.assessment`: TLS parser behind a fake transport, no network transport.
 
-## 22 MCPs (20 + 2 expandable slots)
-1. Recon-Nmap MCP
-2. Recon-Maltego OSINT MCP
-3. Vuln-OpenVAS MCP
-4. Vuln-Nikto Web MCP
-5. Web-Burp Suite Proxy MCP
-6. Web-SQLMap MCP
-7. Web-Gobuster Hybrid MCP
-8. Exploit-Metasploit Framework MCP
-9. Exploit-SET Social-Engineering MCP
-10. Wireless-Aircrack-ng Suite MCP
-11. Wireless-Bettercap MITM MCP
-12. Wireless-Yersinia Layer2 MCP
-13. Password-John + Hashcat Hybrid MCP
-14. Password-Hydra Brute MCP
-15. Password-Responsive LLMNR MCP
-16. Post-Empire MCP
-17. Forensics-Autopsy + Volatility MCP
-18. Forensics-Foremost Carver MCP
-19. Sniff-Wireshark + tcpdump MCP
-20. Reporting-Dradis + Export MCP
-21. Future MCP 21 (Expandable)
-22. Future MCP 22 (Expandable)
+All UI actions route through these manifests and the runner simulator. There is no generic command execution API.
 
-## Ethics
-See ethics.md
+## Security Notes
 
-For authorized use only.
+- The UI is not a trusted authorization boundary; the runner re-validates each signed job envelope.
+- Job signing keys are generated in memory for the local simulator and are not logged.
+- Evidence content is deterministic fixture data and is hashed before report inclusion.
+- Reports are drafts and must not be represented as compliance certification.
 
-## Bonus Image Prompts (v1.1 Real Control Plane)
-1. Professional dark Kali Linux desktop GUI MasterBlaster-Control v1.1, top bar with logo and global target, left sidebar 22 MCP buttons with live colored status dots (gray/green/yellow/red), central dashboard with full grid of 22 live cards showing Running/Success/Failed/Stopped with progress bars, right workflow chain list with up/down/remove and Execute button, modern cyber UI, 4K
-2. Detailed PySide6 MCP tab for SQLMap in dark theme: parameter form, big Execute and Stop buttons, live scrolling terminal output, progress bar, parsed results table showing found vulnerabilities, status badges
-3. Interactive workflow builder canvas in MasterBlaster-Control: draggable MCP nodes (Nmap, SQLMap, Metasploit) connected in sequence, global target, live execution status glow on current step, dark Kali aesthetic with universal log below
+## Roadmap
 
-```
-
-**2. .gitignore** (write it)
+Phase P0 should continue by adding durable tenant/client/engagement storage, migrations, MCP planning/reporting resources that remain non-executing, broader schema documentation, CI dependency review, and an SBOM workflow. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.

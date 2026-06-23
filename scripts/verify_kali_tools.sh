@@ -1,18 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-KALI_PACKAGES="nmap metasploit-framework sqlmap gobuster nikto burpsuite aircrack-ng bettercap yersinia john hashcat hydra responder autopsy volatility foremost wireshark tcpdump dradis set"
+echo "=== Validate MasterBlaster P0 Manifests ==="
+python - <<'PY'
+from masterblaster_control.runner_simulator import MANIFESTS
 
-echo "=== Verify & Install All Kali Tools ==="
-sudo apt update
-sudo apt install -y $KALI_PACKAGES
+for adapter_id, manifest in MANIFESTS.items():
+    if not manifest.reviewed:
+        raise SystemExit(f"{adapter_id} is not reviewed")
+    if manifest.network_access:
+        raise SystemExit(f"{adapter_id} unexpectedly declares network access")
+    print(f"OK {adapter_id} {manifest.version} {manifest.execution_mode}")
 
-echo -e "\n=== Binary Verification ==="
-for tool in nmap msfconsole sqlmap gobuster nikto airmon-ng bettercap yersinia john hashcat hydra responder autopsy volatility foremost wireshark tcpdump dradis setoolkit; do
-    if command -v $tool &> /dev/null; then
-        echo "✓ $tool"
-    else
-        echo "✗ $tool MISSING"
-    fi
-done
-echo "Done."
+print(f"Validated {len(MANIFESTS)} reviewed manifest(s).")
+PY
