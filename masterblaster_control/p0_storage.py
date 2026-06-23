@@ -303,6 +303,7 @@ class P0Storage:
         self,
         limit: int = 25,
         adapter_id: str | None = None,
+        job_id: str | None = None,
         search: str | None = None,
     ) -> list[dict[str, Any]]:
         self.initialize()
@@ -315,16 +316,91 @@ class P0Storage:
         if adapter_id:
             clauses.append("adapter_id = ?")
             params.append(adapter_id)
+        if job_id:
+            clauses.append("job_id = ?")
+            params.append(job_id)
         if search:
-            clauses.append("(target LIKE ? OR sha256 LIKE ? OR evidence_id LIKE ?)")
+            clauses.append("(target LIKE ? OR sha256 LIKE ? OR evidence_id LIKE ? OR job_id LIKE ?)")
             pattern = f"%{search}%"
-            params.extend([pattern, pattern, pattern])
+            params.extend([pattern, pattern, pattern, pattern])
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY rowid DESC LIMIT ?"
         params.append(limit)
         cursor = self.connect().execute(query, params)
         return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def get_evidence(self, evidence_id: str) -> dict[str, Any] | None:
+        self.initialize()
+        row = self.connect().execute(
+            """
+            SELECT evidence_id, job_id, adapter_id, target, parser_id, tool_version, sha256, content_json
+            FROM evidence_records
+            WHERE evidence_id = ?
+            """,
+            (evidence_id,),
+        ).fetchone()
+        return self._row_to_dict(row) if row else None
+
+    def create_tenant(self, tenant_id: str, display_name: str) -> None:
+        self.initialize()
+        tenant_id = tenant_id.strip()
+        display_name = display_name.strip() or tenant_id
+        if not tenant_id:
+            raise ValueError("tenant_id is required")
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO tenants(tenant_id, display_name, created_at)
+                VALUES (?, ?, ?)
+                """,
+                (tenant_id, display_name, _utc_timestamp()),
+            )
+
+    def create_client(self, client_id: str, tenant_id: str, display_name: str) -> None:
+        self.initialize()
+        client_id = client_id.strip()
+        tenant_id = tenant_id.strip()
+        display_name = display_name.strip() or client_id
+        if not client_id or not tenant_id:
+            raise ValueError("client_id and tenant_id are required")
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO clients(client_id, tenant_id, display_name, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (client_id, tenant_id, display_name, _utc_timestamp()),
+            )
+
+    def save_engagement(self, engagement: Engagement) -> None:
+        self.initialize()
+        with self.connect() as connection:
+            self._upsert_engagement(connection, engagement)
+            connection.commit()
+
+    def export_audit_events_csv(self, limit: int = 500) -> str:
+        events = self.list_audit_events(limit=limit)
+        lines = ["event_id,tenant_id,engagement_id,action,reason_code,created_at,details"]
+        for event in events:
+            details = json.dumps(event.get("details", {}), sort_keys=True)
+            row = [
+                event["event_id"],
+                event["tenant_id"],
+                event["engagement_id"],
+                event["action"],
+                event["reason_code"],
+                event["created_at"],
+                details,
+            ]
+            lines.append(",".join(f'"{str(value).replace(chr(34), chr(34) * 2)}"' for value in row))
+        return "\n".join(lines) + "\n"
+
+    def export_evidence_json(self, limit: int = 500) -> str:
+        records = self.list_evidence(limit=limit)
+        return json.dumps(records, indent=2, sort_keys=True) + "\n"
 
     def close(self) -> None:
         if self._connection is not None:

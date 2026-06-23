@@ -81,3 +81,31 @@ def test_dns_posture_fixture_completes_for_domain_target():
     observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
     assert "dns.spf" in observation_ids
     assert "dns.dmarc" in observation_ids
+
+
+def test_http_headers_fixture_completes_for_url_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    target = "https://example.com/"
+    engagement = build_default_engagement(target, now=now)
+    approval = _approved(engagement, "a3.http.headers", target, now)
+
+    result = runner.run("a3.http.headers", target, engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "http.strict_transport_security" in observation_ids
+
+
+def test_tls_cert_expiry_fixture_completes_for_domain_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a4.tls.cert_expiry", "example.com", now)
+
+    result = runner.run("a4.tls.cert_expiry", "example.com", engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "fake"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "tls.certificate.expired" in observation_ids

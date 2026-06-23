@@ -66,6 +66,32 @@ MANIFESTS: dict[str, AdapterManifest] = {
         reviewed=True,
         description="Parses bundled DNS posture fixture data. No resolver transport is available.",
     ),
+    "a3.http.headers": AdapterManifest(
+        adapter_id="a3.http.headers",
+        name="A3 HTTP Headers",
+        version="0.1.0",
+        tier="A3",
+        execution_mode="offline_fixture",
+        parameters=("target",),
+        allowed_target_types=("url",),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Parses bundled HTTP security header fixture data. No HTTP transport is available.",
+    ),
+    "a4.tls.cert_expiry": AdapterManifest(
+        adapter_id="a4.tls.cert_expiry",
+        name="A4 TLS Certificate Expiry",
+        version="0.1.0",
+        tier="A4",
+        execution_mode="fake_transport",
+        parameters=("target",),
+        allowed_target_types=("domain", "url"),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Exercises certificate-expiry parsing behind a fake transport only.",
+    ),
 }
 
 
@@ -194,6 +220,34 @@ class RunnerSimulator:
                 "policy_reason": REASON_ALLOW,
             }
             parser_id = "parser.dns.fixture.v1"
+        elif manifest.adapter_id == "a3.http.headers":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "none",
+                "observations": [
+                    {"id": "http.strict_transport_security", "value": "max-age=31536000; includeSubDomains"},
+                    {"id": "http.content_security_policy", "value": "default-src 'self'"},
+                    {"id": "http.x_frame_options", "value": "DENY"},
+                    {"id": "http.x_content_type_options", "value": "nosniff"},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = "parser.http.headers.fixture.v1"
+        elif manifest.adapter_id == "a4.tls.cert_expiry":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "fake",
+                "observations": [
+                    {"id": "tls.certificate.not_after", "value": "2027-01-01T00:00:00Z"},
+                    {"id": "tls.certificate.days_remaining", "value": 365},
+                    {"id": "tls.certificate.expired", "value": False},
+                    {"id": "tls.certificate.issuer", "value": "Fixture CA"},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = "parser.tls.cert_expiry.fixture.v1"
         else:
             content = {
                 "adapter_id": manifest.adapter_id,

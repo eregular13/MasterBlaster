@@ -35,3 +35,12 @@ def write_watermarked_report(content, watermark=True, prefix="report"):
             report_file.write("# Simulator evidence draft only. No compliance or certification claim.\n\n")
         report_file.write(content)
     return path
+
+
+def write_export_file(content: str, prefix: str, extension: str) -> str:
+    ensure_dirs()
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = f"reports/{prefix}_{ts}.{extension}"
+    with open(path, "w", encoding="utf-8") as export_file:
+        export_file.write(content)
+    return path
