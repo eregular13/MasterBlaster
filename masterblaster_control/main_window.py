@@ -54,13 +54,21 @@ from .warlord_orchestrator import (
     warlord_chain_markdown,
 )
 from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN, FULL_REGISTRY_QUEUE
+from .kali_tool_wrappers import KALI_TOOL_REGISTRY, tool_arsenal_markdown, unleash_tool
+from .tool_arsenal_tab import ToolArsenalTab
 from .p4_security import KeyStore, RBAC
 from .p8_auth import LocalAuthStore
 from .p8_workflow_assistant import assistant_markdown
 from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS, RunnerSimulator
 from .storage_browser import StorageBrowser
-from .utils import dark_kali_stylesheet, write_export_file, write_watermarked_report
+from .utils import (
+    annihilation_toggle_style,
+    dark_kali_stylesheet,
+    warlord_whip_button_style,
+    write_export_file,
+    write_watermarked_report,
+)
 
 
 class DashboardCard(QFrame):
@@ -133,6 +141,11 @@ class MainWindow(QMainWindow):
         self._batch_queue = []
         self._batch_step_index = 0
         self._registry_results = []
+        self.total_annihilation_mode = self.settings.value("total_annihilation_mode", False, type=bool)
+        self.strike_counter = 0
+        self._flash_pulse = 0
+        self._flash_timer = QTimer(self)
+        self._flash_timer.timeout.connect(self._pulse_warlord_deck)
         self._workflow_running = False
         self._workflow_queue = []
         self._current_workflow_step = None
@@ -168,13 +181,9 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self.engagement_combo, 2)
         self._refresh_engagement_picker()
 
-        self.validate_btn = QPushButton("Arm the Arsenal")
+        self.validate_btn = QPushButton("Unleash Arsenal Check")
         self.validate_btn.clicked.connect(self._verify_and_install_kali_tools)
         top_layout.addWidget(self.validate_btn)
-
-        self.run_all_btn = QPushButton("Crack the Whip — All MCPs")
-        self.run_all_btn.clicked.connect(self._run_all_mcps)
-        top_layout.addWidget(self.run_all_btn)
 
         self.stop_all_btn = QPushButton("Stop Queue")
         self.stop_all_btn.clicked.connect(self._stop_all)
@@ -243,8 +252,11 @@ class MainWindow(QMainWindow):
             self.mcp_tab_widgets[mcp["id"]] = tab
             self.main_tabs.addTab(tab, mcp["name"])
 
+        self.tool_arsenal_tab = ToolArsenalTab(self)
+        self.main_tabs.addTab(self.tool_arsenal_tab, "Tool Arsenal")
+
         self.mb_bridge = MasterBlasterBridge(self)
-        self.main_tabs.addTab(self.mb_bridge, "Guardrails")
+        self.main_tabs.addTab(self.mb_bridge, "Command Post")
 
         self.storage_browser = StorageBrowser(self.storage, self)
         self.main_tabs.addTab(self.storage_browser, "Records")
@@ -310,8 +322,11 @@ class MainWindow(QMainWindow):
         self.collect_btn.clicked.connect(self._collect_evidence)
         bottom_layout.addWidget(self.collect_btn)
 
+        warlord_deck = self._build_warlord_deck()
+
         main_v = QVBoxLayout()
         main_v.addWidget(top_bar)
+        main_v.addWidget(warlord_deck)
         main_v.addWidget(central_splitter, 1)
         main_v.addWidget(bottom_widget)
 
@@ -347,6 +362,91 @@ class MainWindow(QMainWindow):
         if force:
             QMessageBox.critical(self, "Access Denied", "Authorization notice was not accepted.")
         sys.exit(0)
+
+    def _build_warlord_deck(self) -> QWidget:
+        deck = QFrame()
+        deck.setStyleSheet("QFrame { background: #120000; border: 2px solid #8b0000; border-radius: 8px; }")
+        lay = QHBoxLayout(deck)
+        lay.setContentsMargins(12, 8, 12, 8)
+
+        self.whip_btn = QPushButton("⚔  CRACK THE WHIP  —  22 MCPs")
+        self.whip_btn.setStyleSheet(warlord_whip_button_style())
+        self.whip_btn.setMinimumHeight(48)
+        self.whip_btn.clicked.connect(self._run_all_mcps)
+        lay.addWidget(self.whip_btn, 3)
+        self.run_all_btn = self.whip_btn
+
+        annihilation_box = QVBoxLayout()
+        self.annihilation_toggle = QCheckBox("TOTAL ANNIHILATION MODE")
+        self.annihilation_toggle.setStyleSheet(annihilation_toggle_style())
+        self.annihilation_toggle.setToolTip(
+            "Zero-delay registry queue + tool preset barrage after every MCP strike."
+        )
+        self.annihilation_toggle.setChecked(self.total_annihilation_mode)
+        self.annihilation_toggle.toggled.connect(self._on_annihilation_toggled)
+        annihilation_box.addWidget(self.annihilation_toggle)
+        lay.addLayout(annihilation_box, 1)
+
+        counter_box = QVBoxLayout()
+        self.strike_counter_label = QLabel("STRIKES: 0")
+        self.strike_counter_label.setFont(QFont("Consolas", 16, QFont.Weight.Bold))
+        self.strike_counter_label.setStyleSheet("color: #ffd700;")
+        self.strike_counter_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        counter_box.addWidget(self.strike_counter_label)
+        self.strike_status_label = QLabel("WHIP READY")
+        self.strike_status_label.setStyleSheet("color: #ff4444; font-weight: bold;")
+        self.strike_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        counter_box.addWidget(self.strike_status_label)
+        lay.addLayout(counter_box, 1)
+
+        return deck
+
+    def _on_annihilation_toggled(self, enabled: bool):
+        self.total_annihilation_mode = enabled
+        self.settings.setValue("total_annihilation_mode", enabled)
+        mode = "TOTAL ANNIHILATION" if enabled else "STANDARD ASSAULT"
+        self.log_message(f"Warlord mode: {mode}")
+        self.strike_status_label.setText(mode)
+        self.strike_status_label.setStyleSheet(
+            "color: #ff0000; font-weight: bold;" if enabled else "color: #ff4444; font-weight: bold;"
+        )
+
+    def increment_strike_counter(self, count: int = 1):
+        self.strike_counter += count
+        self.strike_counter_label.setText(f"STRIKES: {self.strike_counter}")
+
+    def flash_strike_success(self, label: str):
+        self.strike_status_label.setText(f"☠ {label} LANDED")
+        self.strike_status_label.setStyleSheet("color: #00ff9d; font-weight: bold; font-size: 13px;")
+        self._flash_pulse = 6
+        if not self._flash_timer.isActive():
+            self._flash_timer.start(120)
+
+    def _pulse_warlord_deck(self):
+        self._flash_pulse -= 1
+        if self._flash_pulse <= 0:
+            self._flash_timer.stop()
+            mode = "TOTAL ANNIHILATION" if self.total_annihilation_mode else "WHIP READY"
+            self.strike_status_label.setText(mode)
+            color = "#ff0000" if self.total_annihilation_mode else "#ff4444"
+            self.strike_status_label.setStyleSheet(f"color: {color}; font-weight: bold;")
+            self.whip_btn.setStyleSheet(warlord_whip_button_style())
+            return
+        pulse_on = self._flash_pulse % 2 == 0
+        self.whip_btn.setStyleSheet(
+            "background: #00ff9d; color: #000; font-weight: bold; font-size: 14px; border: 2px solid #00ff9d; padding: 10px 24px;"
+            if pulse_on
+            else warlord_whip_button_style()
+        )
+
+    def _queue_delay_ms(self) -> int:
+        return 0 if self.total_annihilation_mode else 100
+
+    def _primary_tool_for_mcp(self, adapter_id: str) -> str | None:
+        for tool_id, wrapper in KALI_TOOL_REGISTRY.items():
+            if wrapper.mcp_adapter_id == adapter_id:
+                return tool_id
+        return None
 
     def _build_live_dashboard(self):
         container = QWidget()
@@ -424,6 +524,14 @@ class MainWindow(QMainWindow):
                 self.record_runner_result(runner_result)
             except Exception as exc:
                 self.log_message(f"Storage warning for {adapter_id}: {exc}")
+        if self.total_annihilation_mode and step.status == "completed":
+            tool_id = self._primary_tool_for_mcp(adapter_id)
+            if tool_id:
+                tool_result = unleash_tool(self.runner, engagement, target, tool_id)
+                self.log_message(
+                    f"[ANNIHILATION] {tool_result.display_name} → {tool_result.status} | {tool_result.command}"
+                )
+                self.increment_strike_counter()
         ui_status = "Success" if step.status == "completed" else "Denied"
         self.update_mcp_status(adapter_id, ui_status, 100, result=step.reason_code)
 
@@ -583,12 +691,16 @@ class MainWindow(QMainWindow):
         self.log_message(message)
         self.intel_edit.append(f"[{mcp_id}] {status}" + (f": {result}" if result else ""))
 
+        if status == "Success":
+            self.increment_strike_counter()
+            self.flash_strike_success(mcp_id.split(".")[-1][:12])
+
         if self._batch_running:
             callback = self._advance_batch if self._batch_queue else self._finish_batch
-            QTimer.singleShot(100, callback)
+            QTimer.singleShot(self._queue_delay_ms(), callback)
         elif self._workflow_running:
             callback = self._advance_workflow if self._workflow_queue else self._finish_workflow
-            QTimer.singleShot(100, callback)
+            QTimer.singleShot(self._queue_delay_ms(), callback)
         self._refresh_stop_button()
 
     def update_intel(self, text):
@@ -645,13 +757,16 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage(msg)
 
     def _verify_and_install_kali_tools(self):
-        self.log_message("=== Validating reviewed P0 manifests ===")
-        for manifest in MANIFESTS.values():
-            transport = "network" if manifest.network_access else "no-network"
-            state = "reviewed" if manifest.reviewed else "unreviewed"
-            self.log_message(f"{manifest.adapter_id} {manifest.version}: {state}, {transport}, {manifest.execution_mode}")
-        self.update_intel(f"[MANIFESTS] {len(MANIFESTS)} reviewed adapter manifest(s) loaded.")
-        self._update_status("Manifest validation complete")
+        self.log_message(f"=== Arsenal check — {len(KALI_TOOL_REGISTRY)} Kali wrappers across {len(MANIFESTS)} MCPs ===")
+        for tool in KALI_TOOL_REGISTRY.values():
+            self.log_message(
+                f"  {tool.display_name} ({tool.binary}) → {tool.mcp_adapter_id} "
+                f"[{tool.danger_level}] presets={len(tool.presets)}"
+            )
+        self.main_tabs.setCurrentWidget(self.tool_arsenal_tab)
+        self.tool_arsenal_tab.output.append(tool_arsenal_markdown())
+        self.update_intel(f"[ARSENAL] {len(KALI_TOOL_REGISTRY)} governed tool wrappers armed.")
+        self._update_status(f"Arsenal ready — {len(KALI_TOOL_REGISTRY)} blades leashed to MCPs")
 
     def _switch_to_masterblaster_bridge(self):
         self.main_tabs.setCurrentWidget(self.mb_bridge)

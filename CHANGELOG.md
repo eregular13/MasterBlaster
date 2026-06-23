@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.0.0-warlord] - 2026-06-22
+
+### Added
+- **Kali tool wrappers** (`kali_tool_wrappers.py`) — 17 governed tools with assault presets
+- **CLI `unleash_arsenal.py`** — `--tool`, `--preset`, `--category`, `--all` flags
+- **Tool Arsenal tab** — visual grid with one-click UNLEASH buttons per tool
+- **Warlord Command Deck** — big red CRACK THE WHIP button, live strike counter, success pulse animations
+- **Total Annihilation Mode** — zero-delay 22-MCP queue + tool barrage after each strike
+- **War Packs marketplace** — 7 pre-configured MCP + tool chains (`marketplace/war_packs.json`)
+- Savage v1.0 release assets: demo video script, announcement post, release notes
+
+### Changed
+- ethics.md and README rewritten as weapon-grade doctrine — governed, not neutered
+- Command Post tab renamed; marketplace markdown shows War Packs
+
+[1.0.0-warlord]: https://github.com/eregular13/MasterBlaster/releases/tag/v1.0.0-warlord
+
 ## [2.1.0-warlord] - 2026-06-22
 
 ### Added

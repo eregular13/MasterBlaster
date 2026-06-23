@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚔ MASTERBLASTER WARLORD v2.1
+# ⚔ MASTERBLASTER WARLORD v1.0
 ### One Interface. 22 MCPs. Total Domination.
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
@@ -29,8 +29,12 @@ Forget juggling 50 terminal tabs. MasterBlaster is a **fearsome GUI + API comman
 | You Get | What It Does |
 | --- | --- |
 | **22 MCP slots** | Recon, network, web, cloud, binary, API, evidence — all leashed to one throne |
-| **66+ tool bindings** | nmap · rustscan · nuclei · sqlmap · ffuf · feroxbuster · hydra · burp · metasploit · prowler · ghidra · … |
-| **Assault chains** | Crack the whip across 8+ MCPs in one coordinated strike |
+| **17+ Kali wrappers** | nmap · nuclei · sqlmap · ffuf · burp · hydra · gobuster · metasploit · subfinder · masscan · … |
+| **CRACK THE WHIP button** | Big red warlord deck — all 22 MCPs in one registry queue |
+| **Total Annihilation Mode** | Zero-delay strikes + tool barrage per MCP hit |
+| **Tool Arsenal tab** | One-click UNLEASH presets for every governed blade |
+| **War Packs** | 7 pre-configured community toolchains in marketplace |
+| **Assault chains** | 8-MCP fast strike · 12-MCP full assault · 22-MCP total domination |
 | **Evidence capture** | Signed jobs, SHA-256 evidence, audit trail — every hit logged |
 | **Human approval gate** | You rule the engagement; MasterBlaster enforces scope |
 | **AI + MCP API** | Claude, Cursor, Copilot drive the same war machine via stdio/HTTP |
@@ -44,9 +48,10 @@ Forget juggling 50 terminal tabs. MasterBlaster is a **fearsome GUI + API comman
 | Metric | Value |
 | --- | ---: |
 | **Master Control Programs** | **22** |
-| **Kali-grade tool bindings** | **66+** |
-| **Default assault chain depth** | **8 MCPs** |
-| **Parallel queue modes** | Batch · Workflow · Warlord Chain |
+| **Kali tool wrappers** | **17+** |
+| **Tool binding references** | **67+** |
+| **Registry queue** | **22 MCPs** |
+| **War Packs** | **7** |
 | **Policy gate speed** | **< 5ms** |
 | **Automated tests** | **140+** |
 | **MCP API transports** | stdio + HTTP |
@@ -101,6 +106,10 @@ python scripts/demo_warlord_full_chain.py example.com
 
 # Total domination — all 22 MCPs in registry order
 python scripts/demo_warlord_registry_queue.py example.com
+
+# Unleash Kali blades through MCP governors
+python scripts/unleash_arsenal.py example.com --tool nmap --preset syn-top
+python scripts/unleash_arsenal.py example.com --category Web --all
 ```
 
 **Sample chain:**
@@ -175,12 +184,13 @@ curl http://127.0.0.1:8765/health
 
 ## ⚙️ Power Features
 
-- **Crack the Whip — All MCPs** — 22-MCP registry queue in catalog order with live dashboard updates
-- **Assault chain orchestrator** — 8-step fast strike or 12-step full assault chain
-- **Kali tool bindings** — 66+ tools mapped to MCP slots
-- **Records + evidence vault** — every strike hashed and stored
-- **Plugin marketplace** — extend the army without deserting core
-- **Tauri shell** (scaffold) — native wrapper incoming
+- **CRACK THE WHIP** — big red button deploys all 22 MCPs with live strike counter + success pulse
+- **Total Annihilation Mode** — zero-delay registry queue + tool preset barrage per MCP
+- **Tool Arsenal tab** — 17 Kali wrappers with UNLEASH presets (nmap, nuclei, sqlmap, ffuf, burp, …)
+- **CLI `unleash_arsenal.py`** — `--tool`, `--preset`, `--category`, `--all` flags
+- **War Packs marketplace** — Recon Blitz, Web Annihilation, Total Domination, and more
+- **Assault chains** — 8 / 12 / 22 MCP orchestrated strikes with evidence capture
+- **Records + evidence vault** — every blade hashed, signed, and stored
 
 ---
 

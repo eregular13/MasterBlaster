@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "war_packs": [
+    {
+      "pack_id": "warpack-recon-blitz",
+      "name": "Recon Blitz Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": ["mcp.recon.osint", "mcp.recon.subdomain", "a2.dns.posture", "a0.fixture.inventory"],
+      "tools": ["subfinder", "amass", "nmap"],
+      "description": "Subdomain + OSINT + DNS posture blitz — first blood in 4 MCP strikes."
+    },
+    {
+      "pack_id": "warpack-network-siege",
+      "name": "Network Siege Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": ["a5.port.scan_sim", "mcp.network.service", "mcp.network.path", "a7.live.probe"],
+      "tools": ["nmap", "rustscan", "masscan", "netexec"],
+      "description": "Port scan → service ID → path trace → live probe. Tear the network open."
+    },
+    {
+      "pack_id": "warpack-web-annihilation",
+      "name": "Web Annihilation Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": ["a6.web.crawl_sim", "mcp.web.fuzzer", "mcp.web.inject", "mcp.web.auth"],
+      "tools": ["ffuf", "nuclei", "sqlmap", "hydra", "gobuster"],
+      "description": "Crawl → fuzz → inject → crack. Full web assault toolchain."
+    },
+    {
+      "pack_id": "warpack-api-breach",
+      "name": "API Breach Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": ["mcp.api.rest", "mcp.api.graphql", "mcp.evidence.compiler"],
+      "tools": ["burp", "arjun"],
+      "description": "REST + GraphQL strike with Burp-class orchestration and evidence compile."
+    },
+    {
+      "pack_id": "warpack-cloud-assault",
+      "name": "Cloud Assault Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": ["mcp.cloud.iam", "mcp.cloud.storage"],
+      "tools": ["prowler", "trivy", "scout-suite"],
+      "description": "IAM misconfig hunt + storage exposure sweep for cloud targets."
+    },
+    {
+      "pack_id": "warpack-binary-execution",
+      "name": "Binary Execution Pack",
+      "version": "1.0.0-warlord",
+      "author": "Community — redteam-labs",
+      "reviewed": false,
+      "mcp_chain": ["mcp.binary.static", "mcp.binary.dynamic"],
+      "tools": ["ghidra", "metasploit", "gdb"],
+      "description": "Static reverse → dynamic exploit validation. Community submission — review pending."
+    },
+    {
+      "pack_id": "warpack-total-domination",
+      "name": "Total Domination Pack",
+      "version": "1.0.0-warlord",
+      "author": "MasterBlaster Warlord Core",
+      "reviewed": true,
+      "mcp_chain": [],
+      "tools": [],
+      "description": "Full 22-MCP registry queue + entire Kali arsenal. The nuclear option — authorized scope only.",
+      "special": "full_registry_queue"
+    }
+  ]
+}

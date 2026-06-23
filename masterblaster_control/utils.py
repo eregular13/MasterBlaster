@@ -7,6 +7,23 @@ from pathlib import Path
 SAFE_REPORT_PREFIX_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 
+def warlord_whip_button_style() -> str:
+    return (
+        "QPushButton {"
+        " background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ff2222, stop:1 #8b0000);"
+        " color: #ffd700; font-weight: bold; font-size: 14px;"
+        " border: 2px solid #ff4444; border-radius: 6px; padding: 10px 24px;"
+        "}"
+        "QPushButton:hover { background: #cc0000; }"
+        "QPushButton:pressed { background: #5a0000; }"
+        "QPushButton:disabled { background: #333; color: #666; border-color: #444; }"
+    )
+
+
+def annihilation_toggle_style() -> str:
+    return "QCheckBox { color: #ff6666; font-weight: bold; } QCheckBox::indicator:checked { background: #8b0000; }"
+
+
 def dark_kali_stylesheet():
     return """
     QMainWindow, QWidget { background-color: #1a1a1a; color: #cccccc; }

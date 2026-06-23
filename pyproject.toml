@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "masterblaster-control"
-version = "2.1.0-warlord"
-description = "MasterBlaster WARLORD — 22 MCP command plane with Kali-grade tool orchestration"
+version = "1.0.0-warlord"
+description = "MasterBlaster WARLORD v1.0 — 22 MCP command plane, Kali arsenal, total domination"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

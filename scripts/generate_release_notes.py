@@ -10,6 +10,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 ANNOUNCEMENT = REPO_ROOT / "docs" / "marketing" / "ANNOUNCEMENT.md"
+WARLORD_ANNOUNCEMENT = REPO_ROOT / "docs" / "marketing" / "WARLORD_ANNOUNCEMENT_POST.md"
 OUTPUT_DEFAULT = REPO_ROOT / "dist" / "RELEASE_NOTES.md"
 
 
@@ -27,19 +28,20 @@ def generate_release_notes(version: str, *, include_announcement: bool = True) -
     lines = [
         f"# MasterBlaster {version}",
         "",
-        "> Deny-by-default authorized assessment control plane — simulator only.",
+        "> MasterBlaster WARLORD — One interface. 22 MCPs. Total domination.",
         "",
         "## Changelog",
         "",
         section,
         "",
     ]
-    if include_announcement and ANNOUNCEMENT.exists():
+    announcement_path = WARLORD_ANNOUNCEMENT if WARLORD_ANNOUNCEMENT.exists() else ANNOUNCEMENT
+    if include_announcement and announcement_path.exists():
         lines.extend(
             [
                 "## Community Announcement",
                 "",
-                ANNOUNCEMENT.read_text(encoding="utf-8").strip(),
+                announcement_path.read_text(encoding="utf-8").strip(),
                 "",
             ]
         )
@@ -49,10 +51,11 @@ def generate_release_notes(version: str, *, include_announcement: bool = True) -
             "",
             "```bash",
             "git clone https://github.com/eregular13/MasterBlaster.git",
-            "git checkout grok/masterblaster",
+            "git checkout grokier/masterblaster",
             "pip install -r requirements.txt",
             "python -m pytest",
-            "python scripts/demo_v1_showcase.py",
+            "python scripts/demo_warlord_registry_queue.py example.com",
+            "python scripts/unleash_arsenal.py example.com --tool nmap",
             "python main.py",
             "```",
             "",
