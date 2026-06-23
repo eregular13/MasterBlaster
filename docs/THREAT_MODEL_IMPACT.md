@@ -10,6 +10,7 @@
 - Local SQLite audit history.
 - Non-executing planning, reporting, and governance resources.
 - Acceptance dashboard criteria and evidence links.
+- Storage redaction and retention policy.
 
 ## Trust Boundaries
 
@@ -23,6 +24,8 @@ P0 resources are not trusted for authorization. They are deterministic templates
 
 Acceptance criteria are not trusted for authorization. They document readiness and blockers only.
 
+Redaction is not trusted as permission to collect secrets. It is a fail-soft persistence guard for accidental sensitive keys or inline secret-like strings.
+
 ## Threats Reduced
 
 - Arbitrary command execution through user-controlled flags or script paths.
@@ -33,6 +36,7 @@ Acceptance criteria are not trusted for authorization. They document readiness a
 - Resource confusion, because unknown resource URIs fail closed and registered resources self-declare as non-executing content.
 - Readiness inflation, because acceptance percentages are computed from explicit criteria with evidence links and blockers.
 - Approval spoofing, because missing, denied, expired, or mismatched approvals fail closed before job issuance.
+- Local artifact over-retention, because old approvals, jobs, evidence, and audit events can be purged in dependency-safe order.
 
 ## Threats Remaining
 

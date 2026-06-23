@@ -24,6 +24,16 @@ Storage is not an authorization boundary. The UI may request a run, but the `Run
 
 Schema updates must be append-only migrations with tests. Migrations must not introduce live execution, network transport, secrets, or policy bypasses.
 
+## Redaction Rule
+
+JSON values pass through recursive redaction before storage. Sensitive key fragments such as `token`, `secret`, `password`, `credential`, and `api_key` are replaced with `[REDACTED]`. Inline secret assignment patterns are also redacted.
+
+Redaction is a defensive control, not permission to collect secrets.
+
+## Retention Rule
+
+`P0Storage.apply_retention()` purges old evidence records, jobs, approvals, and audit events in dependency-safe order. Tenants, clients, and engagements are retained until future retention policy defines authoritative lifecycle ownership.
+
 ## P0 Limitation
 
-The default desktop database is local-only at `data/masterblaster_p0.sqlite3`. Durable multi-user tenancy, authn/authz, retention policy, and encrypted-at-rest configuration are future acceptance items.
+The default desktop database is local-only at `data/masterblaster_p0.sqlite3`. Durable multi-user tenancy, authn/authz, per-engagement retention overrides, and encrypted-at-rest configuration are future acceptance items.

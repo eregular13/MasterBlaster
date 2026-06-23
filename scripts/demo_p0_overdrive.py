@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +10,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from masterblaster_control.p0_acceptance import acceptance_summary
 from masterblaster_control.p0_approvals import approve_request, deny_request, request_approval
+from masterblaster_control.p0_retention import RetentionPolicy, redact_for_storage
 from masterblaster_control.p0_resources import list_resources
 from masterblaster_control.p0_storage import P0Storage
 from masterblaster_control.runner_simulator import MANIFESTS, RunnerSimulator, build_default_engagement
@@ -67,6 +69,13 @@ def main() -> int:
         f"tenants={snapshot.tenants}, clients={snapshot.clients}, engagements={snapshot.engagements}, "
         f"approvals={snapshot.approvals}, jobs={snapshot.jobs}, evidence={snapshot.evidence_records}, "
         f"audit={snapshot.audit_events}"
+    )
+    print(f"Redaction preview: {redact_for_storage({'api_key': 'demo-secret', 'safe': 'fixture'})}")
+    retention = storage.apply_retention(RetentionPolicy(1, 1, 1, 1), now=datetime(2030, 1, 1, tzinfo=timezone.utc))
+    print(
+        "Retention purge preview: "
+        f"approvals={retention.approvals_deleted}, jobs={retention.jobs_deleted}, "
+        f"evidence={retention.evidence_deleted}, audit={retention.audit_events_deleted}"
     )
 
     summary = acceptance_summary()

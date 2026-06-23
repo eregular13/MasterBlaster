@@ -2,11 +2,11 @@
 
 This checklist gates discussion of any A2/A3 live capability. The source of truth is `masterblaster_control/p0_acceptance.py`; this document mirrors the current criteria and evidence links.
 
-- Overall reference completion: 72%
-- P1 gate completion: 78%
-- Complete: 14
-- Partial: 4
-- Not started: 4
+- Overall reference completion: 78%
+- P1 gate completion: 84%
+- Complete: 16
+- Partial: 3
+- Not started: 3
 
 | Criterion | Status | % | P1 Gate | Evidence | Next Action |
 | --- | --- | ---: | --- | --- | --- |
@@ -18,7 +18,7 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 | Offline A0 fixture inventory adapter | complete | 100% | yes | `masterblaster_control/runner_simulator.py` | Move fixture payloads to versioned fixture files. |
 | A1 TLS assessment behind fake transport | complete | 100% | yes | `masterblaster_control/runner_simulator.py`, `tests/test_runner_simulator.py` | Add alternate TLS fixture scenarios. |
 | Deterministic evidence hashes and parser provenance | complete | 100% | yes | `masterblaster_control/p0_models.py`, `tests/test_runner_simulator.py` | Add finding/mapping projection from evidence. |
-| Persistent local audit for completed and denied outcomes | partial | 90% | yes | `masterblaster_control/p0_storage.py`, `masterblaster_control/p0_approvals.py`, `tests/test_p0_storage.py` | Add retention and redaction controls. |
+| Persistent local audit for completed and denied outcomes | complete | 100% | yes | `masterblaster_control/p0_storage.py`, `masterblaster_control/p0_approvals.py`, `masterblaster_control/p0_retention.py`, `tests/test_p0_storage.py` | Add operator-configurable retention presets in the Qt settings panel. |
 | Non-executing planning, reporting, governance resources | complete | 100% | yes | `masterblaster_control/p0_resources.py`, `tests/test_p0_resources.py` | Wrap resources in an MCP read-only service. |
 | Negative tests for deny-by-default policy behavior | complete | 100% | yes | `tests/test_p0_policy.py` | Add mutation-style tests for policy bypass attempts. |
 | Security impact and threat-model impact documentation | complete | 100% | yes | `docs/SECURITY_IMPACT.md`, `docs/THREAT_MODEL_IMPACT.md` | Add formal data-flow diagram doc. |
@@ -30,7 +30,7 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 | Additional fixture adapters and parser scenarios | partial | 30% | no | `masterblaster_control/runner_simulator.py` | Add HTTP headers, DNS posture, and certificate-expiry fixture scenarios. |
 | CI workflow for tests, dependency review, and SBOM stubs | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add GitHub Actions workflow plus generated SBOM placeholder. |
 | Review policy for security-sensitive files | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add CODEOWNERS-style policy documentation. |
-| Storage retention and redaction policy | not_started | 0% | yes | `docs/architecture/p0-storage.md` | Add redaction helpers and retention settings. |
+| Storage retention and redaction policy | complete | 100% | yes | `masterblaster_control/p0_retention.py`, `masterblaster_control/p0_storage.py`, `tests/test_p0_retention.py`, `tests/test_p0_storage.py` | Add per-engagement retention overrides after management UI exists. |
 | Rich audit and evidence browser in Qt UI | partial | 40% | no | `masterblaster_control/main_window.py` | Add filterable audit/evidence table widgets. |
 
 ## Hard Blockers For P1
@@ -40,4 +40,4 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 - No arbitrary shell or user-supplied raw CLI arguments.
 - No claims of compliance certification from simulator output.
 - No adapter without a reviewed manifest and tests.
-- Read-only MCP wrapper, CI/SBOM, review policy, and retention/redaction controls must be completed.
+- Read-only MCP wrapper, CI/SBOM, and review policy must be completed.

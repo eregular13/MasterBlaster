@@ -16,6 +16,7 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Added a closed non-executing P0 resource registry for planning, reporting, and governance templates.
 - Added a machine-readable acceptance dashboard with evidence links and explicit P1 blockers.
 - Added runner-enforced human approval artifacts before simulator job envelope issuance.
+- Added defensive storage redaction and deterministic retention purge controls.
 
 ## Privileged Behavior
 

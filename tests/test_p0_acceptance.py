@@ -22,13 +22,13 @@ def test_acceptance_summary_is_stable_and_has_p1_blockers():
     summary = acceptance_summary()
 
     assert summary.total == len(list_acceptance_criteria())
-    assert summary.complete >= 13
+    assert summary.complete >= 16
     assert summary.partial >= 3
-    assert summary.not_started >= 4
+    assert summary.not_started >= 3
     assert 60 <= summary.overall_percent <= 90
     assert 60 <= summary.p1_gate_percent <= 90
     assert "approvals.human_gate" not in summary.p1_blockers
-    assert "storage.retention_redaction" in summary.p1_blockers
+    assert "storage.retention_redaction" not in summary.p1_blockers
     assert "mcp.read_only_wrapper" in summary.p1_blockers
 
 

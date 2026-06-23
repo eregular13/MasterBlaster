@@ -14,6 +14,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - One A1 TLS assessment adapter using a fake transport only.
 - Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
 - SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
+- Recursive storage redaction and explicit retention purge controls for local simulator artifacts.
 - Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
 - Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
 - Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
@@ -51,7 +52,7 @@ Run the console demo:
 python scripts/demo_p0_overdrive.py
 ```
 
-The demo validates reviewed manifests and non-executing resources, runs one allowed fixture simulator job and one denied fake-transport request, records both outcomes in in-memory storage, and prints acceptance blockers.
+The demo validates reviewed manifests and non-executing resources, runs one approved fixture simulator job and one denied approval path, records both outcomes in in-memory storage, previews redaction/retention controls, and prints acceptance blockers.
 
 ## Adapter Manifests
 
@@ -74,6 +75,8 @@ The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator s
 - a migration table and report draft table skeleton.
 
 The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
+
+JSON values are recursively redacted before persistence when they use sensitive key names or inline secret assignment patterns. Local retention controls can purge old approvals, jobs, evidence records, and audit events in dependency-safe order.
 
 ## Human Approval Gate
 
@@ -110,6 +113,7 @@ The Qt Guardrails panel and report draft exports include the dashboard.
 - Job signing keys are generated in memory for the local simulator and are not logged.
 - Evidence content is deterministic fixture data and is hashed before report inclusion.
 - Persistent audit records are local simulator artifacts and should not contain secrets.
+- Storage redaction is defensive; secrets still must not be entered into simulator payloads.
 - Reports are drafts and must not be represented as compliance certification.
 - See `docs/P0_ACCEPTANCE_CHECKLIST.md` before discussing any P1 or live capability.
 

@@ -10,6 +10,7 @@ from typing import Any, Iterable
 
 from .p0_models import ApprovalRequest, Engagement, EvidenceRecord
 from .p0_policy import canonical_json
+from .p0_retention import RetentionPolicy, RetentionResult, redact_for_storage, retention_cutoff
 from .runner_simulator import RunnerResult
 
 SCHEMA_VERSION = 2
@@ -31,7 +32,7 @@ def _utc_timestamp() -> str:
 
 
 def _json(data: Any) -> str:
-    return canonical_json(data)
+    return canonical_json(redact_for_storage(data))
 
 
 class P0Storage:
@@ -153,6 +154,56 @@ class P0Storage:
             jobs=self._count(connection, "jobs"),
             evidence_records=self._count(connection, "evidence_records"),
             audit_events=self._count(connection, "audit_events"),
+        )
+
+    def apply_retention(
+        self,
+        policy: RetentionPolicy | None = None,
+        now: datetime | None = None,
+    ) -> RetentionResult:
+        self.initialize()
+        policy = policy or RetentionPolicy()
+        policy.validate()
+        connection = self.connect()
+        evidence_cutoff = retention_cutoff(policy.evidence_retention_days, now=now)
+        job_cutoff = retention_cutoff(policy.job_retention_days, now=now)
+        approval_cutoff = retention_cutoff(policy.approval_retention_days, now=now)
+        audit_cutoff = retention_cutoff(policy.audit_retention_days, now=now)
+
+        with connection:
+            evidence_deleted = connection.execute(
+                """
+                DELETE FROM evidence_records
+                WHERE job_id IN (
+                    SELECT job_id FROM jobs WHERE issued_at < ? OR issued_at < ?
+                )
+                """,
+                (evidence_cutoff, job_cutoff),
+            ).rowcount
+            jobs_deleted = connection.execute(
+                "DELETE FROM jobs WHERE issued_at < ?",
+                (job_cutoff,),
+            ).rowcount
+            approvals_deleted = connection.execute(
+                """
+                DELETE FROM approvals
+                WHERE requested_at < ?
+                  AND approval_id NOT IN (
+                      SELECT approval_id FROM jobs WHERE approval_id IS NOT NULL
+                  )
+                """,
+                (approval_cutoff,),
+            ).rowcount
+            audit_events_deleted = connection.execute(
+                "DELETE FROM audit_events WHERE created_at < ?",
+                (audit_cutoff,),
+            ).rowcount
+
+        return RetentionResult(
+            approvals_deleted=approvals_deleted,
+            jobs_deleted=jobs_deleted,
+            evidence_deleted=evidence_deleted,
+            audit_events_deleted=audit_events_deleted,
         )
 
     def list_audit_events(self, limit: int = 25) -> list[dict[str, Any]]:
