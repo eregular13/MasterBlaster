@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "listings": [
+    {
+      "listing_id": "mb-listing-builtin-reporting",
+      "plugin_id": "plugin.builtin.reporting",
+      "name": "Builtin Reporting",
+      "version": "1.0.0",
+      "author": "MasterBlaster Core",
+      "reviewed": true,
+      "description": "Non-executing reporting manifest bundled with core."
+    },
+    {
+      "listing_id": "mb-listing-fixture-observatory",
+      "plugin_id": "plugin.fixture.observatory",
+      "name": "Fixture Observatory",
+      "version": "1.0.0",
+      "author": "MasterBlaster Core",
+      "reviewed": true,
+      "description": "Observatory fixtures for simulator demonstrations."
+    }
+  ]
+}

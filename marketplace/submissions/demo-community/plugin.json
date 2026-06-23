@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "plugin_id": "plugin.community.demo",
+  "name": "Community Demo Plugin",
+  "version": "0.1.0",
+  "min_core_version": "1.0.0",
+  "reviewed": false,
+  "non_executing": true,
+  "description": "Pending community submission — not loaded until reviewed and approved.",
+  "adapter_ids": [],
+  "resource_uris": []
+}
