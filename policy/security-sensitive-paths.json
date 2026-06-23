@@ -261,6 +261,71 @@
       "pattern": "/tests/test_adversarial_policy.py",
       "category": "tests",
       "rationale": "Adversarial deny-by-default pen-test pack lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p9_*.py",
+      "category": "p9-enterprise",
+      "rationale": "P9 feature flags, HSM, OIDC, A7 adapter, plugin review boundary."
+    },
+    {
+      "pattern": "/masterblaster_control/p10_*.py",
+      "category": "p10-community",
+      "rationale": "P10 marketplace skeleton boundary lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p8_acceptance_gate.py",
+      "category": "acceptance",
+      "rationale": "P8 completion gate telemetry lives here."
+    },
+    {
+      "pattern": "/scripts/mcp_http_server.py",
+      "category": "mcp",
+      "rationale": "Read-only MCP HTTP transport wrapper lives here."
+    },
+    {
+      "pattern": "/scripts/generate_release_notes.py",
+      "category": "release",
+      "rationale": "Release notes automation from CHANGELOG lives here."
+    },
+    {
+      "pattern": "/scripts/validate_plugin_submission.py",
+      "category": "plugins",
+      "rationale": "Community plugin submission validator lives here."
+    },
+    {
+      "pattern": "/marketplace/**",
+      "category": "marketplace",
+      "rationale": "Plugin marketplace catalog and submission queue lives here."
+    },
+    {
+      "pattern": "/tests/test_p9_*.py",
+      "category": "tests",
+      "rationale": "P9 enterprise feature regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_p10_*.py",
+      "category": "tests",
+      "rationale": "P10 marketplace regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_parse_target_fuzz.py",
+      "category": "tests",
+      "rationale": "Target parser fuzz and homoglyph regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_p8_acceptance_gate.py",
+      "category": "tests",
+      "rationale": "P8 completion gate regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_mcp_http_server.py",
+      "category": "tests",
+      "rationale": "MCP HTTP server regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_generate_release_notes.py",
+      "category": "tests",
+      "rationale": "Release notes automation regression tests live here."
     }
   ]
 }

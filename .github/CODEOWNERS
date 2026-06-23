@@ -53,3 +53,16 @@
 /tests/test_p8_*.py @eregular13
 /tests/test_mcp_stdio_server.py @eregular13
 /tests/test_adversarial_policy.py @eregular13
+/masterblaster_control/p9_*.py @eregular13
+/masterblaster_control/p10_*.py @eregular13
+/masterblaster_control/p8_acceptance_gate.py @eregular13
+/scripts/mcp_http_server.py @eregular13
+/scripts/generate_release_notes.py @eregular13
+/scripts/validate_plugin_submission.py @eregular13
+/marketplace/** @eregular13
+/tests/test_p9_*.py @eregular13
+/tests/test_p10_*.py @eregular13
+/tests/test_parse_target_fuzz.py @eregular13
+/tests/test_p8_acceptance_gate.py @eregular13
+/tests/test_mcp_http_server.py @eregular13
+/tests/test_generate_release_notes.py @eregular13

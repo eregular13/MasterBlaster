@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
 
 permissions:
   contents: write
@@ -13,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -26,12 +34,36 @@ jobs:
           python -m pytest
           python scripts/validate_p0_registry.py
           python scripts/validate_plugins.py
+          python scripts/validate_plugin_submission.py
           python scripts/generate_sbom_stub.py --output dist/sbom.cdx.json
 
-      - name: Create GitHub Release
+      - name: Generate release notes and announcement assets
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+            VERSION="${VERSION#v}"
+          fi
+          python scripts/generate_release_notes.py --version "$VERSION" --output dist/RELEASE_NOTES.md
+          cp CHANGELOG.md dist/CHANGELOG.md
+          cp docs/marketing/V1_RELEASE_ANNOUNCEMENT.md dist/V1_RELEASE_ANNOUNCEMENT.md
+          cp docs/marketing/ANNOUNCEMENT.md dist/ANNOUNCEMENT.md
+
+      - name: Create source archive
+        run: |
+          git archive --format=tar.gz --prefix=MasterBlaster/ -o dist/MasterBlaster-source.tar.gz HEAD
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: MasterBlaster ${{ github.event.inputs.tag || github.ref_name }}
+          body_path: dist/RELEASE_NOTES.md
           files: |
+            dist/RELEASE_NOTES.md
+            dist/CHANGELOG.md
+            dist/V1_RELEASE_ANNOUNCEMENT.md
+            dist/ANNOUNCEMENT.md
             dist/sbom.cdx.json
-            CHANGELOG.md
+            dist/MasterBlaster-source.tar.gz
+          fail_on_unmatched_files: true

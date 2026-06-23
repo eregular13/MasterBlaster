@@ -29,9 +29,15 @@ jobs:
       - name: Build MasterBlaster bundle
         run: pyinstaller packaging/masterblaster.spec --noconfirm
 
+      - name: Optional Authenticode signing
+        shell: pwsh
+        run: ./packaging/sign_windows.ps1 -ArtifactPath dist/MasterBlaster
+        env:
+          MB_CODESIGN_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CODESIGN_THUMBPRINT }}
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: MasterBlaster-windows
           path: dist/MasterBlaster/
-          retention-days: 14
+          retention-days: 30

@@ -7,9 +7,13 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBox
 from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
+from .p10_marketplace import marketplace_markdown
 from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
 from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
+from .p8_acceptance_gate import p8_gate_markdown
 from .p8_workflow_assistant import assistant_markdown
+from .p9_feature_flags import feature_flags_markdown
+from .p9_plugin_review import review_queue_markdown
 from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS
 
@@ -51,7 +55,7 @@ class MasterBlasterBridge(QWidget):
         buttons.addWidget(self.dashboard_btn)
 
         row2 = QHBoxLayout()
-        self.phase_btn = QPushButton("Phase Roadmap P0-P8")
+        self.phase_btn = QPushButton("Phase Roadmap P0-P10")
         self.phase_btn.clicked.connect(self.show_phase_roadmap)
         row2.addWidget(self.phase_btn)
 
@@ -75,9 +79,30 @@ class MasterBlasterBridge(QWidget):
         self.hot_reload_btn.clicked.connect(self.hot_reload_plugins)
         row3.addWidget(self.hot_reload_btn)
 
+        self.review_queue_btn = QPushButton("Plugin Review Queue")
+        self.review_queue_btn.setToolTip("Community submission queue — manifest review only.")
+        self.review_queue_btn.clicked.connect(self.show_plugin_review_queue)
+        row3.addWidget(self.review_queue_btn)
+
+        row4 = QHBoxLayout()
+        self.marketplace_btn = QPushButton("Marketplace Catalog")
+        self.marketplace_btn.setToolTip("P10 marketplace listing skeleton.")
+        self.marketplace_btn.clicked.connect(self.show_marketplace)
+        row4.addWidget(self.marketplace_btn)
+
+        self.flags_btn = QPushButton("Feature Flags")
+        self.flags_btn.setToolTip("P9 feature flags — live adapter, OIDC, HSM, marketplace.")
+        self.flags_btn.clicked.connect(self.show_feature_flags)
+        row4.addWidget(self.flags_btn)
+
+        self.p8_gate_btn = QPushButton("P8 Acceptance Gate")
+        self.p8_gate_btn.clicked.connect(self.show_p8_gate)
+        row4.addWidget(self.p8_gate_btn)
+
         lay.addLayout(buttons)
         lay.addLayout(row2)
         lay.addLayout(row3)
+        lay.addLayout(row4)
 
         self.refresh_scripts()
 
@@ -130,6 +155,22 @@ class MasterBlasterBridge(QWidget):
         self.output.clear()
         self.output.append(f"Hot-reloaded {len(plugins)} plugin manifest(s).")
         self.output.append(plugin_catalog_markdown(plugins))
+
+    def show_plugin_review_queue(self):
+        self.output.clear()
+        self.output.append(review_queue_markdown())
+
+    def show_marketplace(self):
+        self.output.clear()
+        self.output.append(marketplace_markdown())
+
+    def show_feature_flags(self):
+        self.output.clear()
+        self.output.append(feature_flags_markdown())
+
+    def show_p8_gate(self):
+        self.output.clear()
+        self.output.append(p8_gate_markdown())
 
     def _launch_selected(self):
         self.output.append("Denied: P0 does not allow direct script execution.")
