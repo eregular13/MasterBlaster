@@ -97,7 +97,7 @@ def main() -> int:
         for blocker in summary.p1_blockers[:5]:
             print(f"- {blocker}")
     else:
-        print("P1 gate criteria are complete. Enable branch protection and CODEOWNERS-required review in GitHub settings before claiming remote enforcement.")
+        print("P1 gate criteria are complete.")
     storage.close()
     return 0
 

@@ -38,12 +38,16 @@
 | Report helper accepted arbitrary prefixes. | Future callers could accidentally create path traversal or absolute-path writes. | Report prefixes now require a safe lowercase slug and writes stay under `reports/`. | `tests/test_utils.py` |
 | Prohibited capability checks were ad hoc text sweeps. | String checks could miss AST constructs or flag harmless docs. | Added AST scanner for forbidden imports, calls, names, and `shell=True`. | `scripts/scan_prohibited_capabilities.py`, `tests/test_prohibited_capability_scanner.py` |
 | CI/SBOM and review policy blockers lacked reproducible enforcement. | P1 gate depended on documentation rather than machine-checkable artifacts. | Added pinned GitHub Actions workflows, deterministic SPDX SBOM, SBOM check mode, CODEOWNERS, PR template, sensitive-path inventory, and governance validator. | `scripts/generate_sbom.py`, `scripts/validate_governance.py`, `tests/test_sbom_generation.py`, `tests/test_governance_review_policy.py` |
+| Acceptance dashboard counted advisory and product gaps too optimistically. | P0 readiness could appear greener than executable evidence supported. | Replaced static status values with verifier-derived criteria, failed-verifier reasons, and explicit external blockers. | `masterblaster_control/p0_acceptance.py`, `tests/test_p0_acceptance.py` |
+| Adapter dispatch used a fallback branch. | A new manifest could accidentally receive the wrong simulated behavior. | Added immutable one-to-one manifest/handler/fixture registration and checked-in fixture scenario files. | `tests/test_runner_simulator.py::test_adapter_handler_registry_is_immutable_and_complete` |
+| Evidence hashes covered content only. | Metadata substitution could preserve a content hash while changing provenance. | Evidence digests now bind job, approval, adapter/version, target, parser/version, fixture ID, and content. | `tests/test_runner_simulator.py::test_evidence_verifier_rejects_metadata_substitution` |
+| Read-only MCP report rendering initialized default storage. | A read-only draft operation could create local database state. | The facade now defaults to an empty read-only view and requires explicit storage injection for stored summaries. | `tests/test_p0_mcp_readonly.py::test_default_readonly_facade_does_not_create_database_file` |
 
 ## Residual Risks
 
 - GitHub branch protection, required status checks, dependency graph support, and CODEOWNERS-required review are external repository settings. The repository files document the required settings but cannot prove they are enabled.
-- GitHub dependency review is advisory until Dependency graph support is enabled. The local SBOM check remains the required dependency drift gate in CI.
-- Persistent tenant/client/engagement management remains a local skeleton rather than a production authorization workflow.
+- GitHub dependency review is not verified until Dependency graph support is enabled. The local SBOM check remains the required dependency metadata drift gate, but not a vulnerability-review substitute.
+- Persistent tenant/client/engagement management is implemented as a local P0 simulator workflow, not a production multi-operator authorization workflow.
 - The local simulator signing key is process-local and intended for P0 demo validation only.
 - Report exports remain Markdown drafts requiring human review.
 - Any future MCP network or stdio transport must delegate only to `P0ReadOnlyMCPFacade` and must receive separate integration tests.
@@ -73,15 +77,16 @@ python scripts\scan_prohibited_capabilities.py
 
 Observed results:
 
-- `python -m pytest` -> 53 passed.
+- `python -m pytest` -> 82 passed.
 - `python -m compileall masterblaster_control scripts` -> succeeded.
-- `python scripts\validate_p0_registry.py` -> 2 reviewed manifests, 5 non-executing resources, deterministic SPDX SBOM, governance artifacts, prohibited-capability scan, 91% overall, 100% P1 gate, 0 blockers.
-- `python scripts\demo_p0_overdrive.py` -> approved fixture run, denied approval path, redaction preview, retention purge preview, read-only MCP drafts, 100% P1 gate.
+- `python scripts\validate_p0_registry.py` -> 5 reviewed manifests, 5 non-executing resources, deterministic SPDX SBOM, governance artifacts, prohibited-capability scan, 97% overall, 96% P1 gate, 2 blockers.
+- `python scripts\demo_p0_overdrive.py` -> approved fixture run, denied approval path, redaction preview, retention purge preview, read-only MCP drafts, 96% P1 gate.
 - `python scripts\generate_sbom.py --check` -> succeeded.
 - `python scripts\validate_governance.py` -> succeeded.
 - `python scripts\scan_prohibited_capabilities.py` -> succeeded.
+- Local Qt import smoke -> blocked in this Python 3.14 environment because `PySide6` is not installed; CI now installs the project and runs a Qt import smoke on supported Python 3.12.
 - SBOM regenerated without hash drift: `CFF32464B6A103ED9E62EB681414E522496338E7B60451DDAA214DA0A82C06E3`.
-- GitHub `Dependency Review` workflow should be treated as local SBOM enforcement plus advisory dependency graph review until repository Dependency graph support is enabled.
+- GitHub `Dependency Review` must fail closed until repository Dependency graph support is enabled and verified.
 
 ## Why The System Remains Non-Executing
 

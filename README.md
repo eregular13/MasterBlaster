@@ -8,12 +8,11 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - Deterministic target parsing for host, domain, IP, CIDR, and HTTP(S) URL inputs.
 - Scope and rules-of-engagement policy decisions with stable reason codes.
 - Human approval artifacts validated by the runner before job issuance.
-- Signed, expiring, tenant-bound, client-bound, engagement-bound, target-bound, and adapter-bound job envelopes.
+- Signed, expiring, tenant-bound, client-bound, engagement-bound, approval-bound, target-bound, and adapter-bound job envelopes.
 - Runner simulator that independently validates policy and job signatures before emitting fixture evidence.
-- One offline A0 fixture inventory adapter.
-- One A1 TLS assessment adapter using a fake transport only.
-- Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
-- SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
+- Five reviewed fixture adapters: A0 inventory, A1 TLS fake transport, A2 HTTP headers, A2 DNS posture, and A2 certificate-expiry posture.
+- Evidence records with parser provenance, adapter version, fixture scenario, approval linkage, and SHA-256 canonical envelope hashes.
+- SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts, with scoped tenant reads.
 - Recursive storage redaction and explicit retention purge controls for local simulator artifacts.
 - Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
 - Read-only MCP-shaped facade for registered resources, planning briefs, and simulator report drafts.
@@ -22,7 +21,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - CODEOWNERS-backed security-sensitive path inventory, PR template, and governance drift validator.
 - AST-based prohibited-capability scanner for Python execution/network primitives.
 - Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
-- Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
+- Desktop UI for persisted tenant/client/engagement selection, simulator runs, workflow ordering, scoped audit/evidence browsing, and report drafts.
 
 ## Non-Goals in P0
 
@@ -31,9 +30,9 @@ P0 does not install Kali tools, execute host commands, launch submodule scripts,
 ## Quick Start
 
 ```bash
-python -m venv .venv
+py -3.12 -m venv .venv
 . .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 python main.py
 ```
 
@@ -71,6 +70,9 @@ The reviewed P0 manifests live in `masterblaster_control/runner_simulator.py`:
 
 - `a0.fixture.inventory`: offline fixture parser, no network transport.
 - `a1.tls.assessment`: TLS parser behind a fake transport, no network transport.
+- `a2.http.headers`: HTTP response-header posture parser over checked-in JSON fixtures only.
+- `a2.dns.posture`: DNS posture parser over checked-in JSON fixtures only.
+- `a2.certificate.expiry`: certificate-expiry posture parser over checked-in JSON fixtures only.
 
 All UI actions route through these manifests and the runner simulator. There is no generic command execution API.
 
@@ -87,11 +89,11 @@ The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator s
 
 The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
 
-JSON values are recursively redacted before persistence when they use sensitive key names or inline secret assignment patterns. Local retention controls can purge old approvals, jobs, evidence records, and audit events in dependency-safe order.
+Ordinary audit/evidence reads require tenant scope; global reads are named as admin reads. JSON values are recursively redacted before persistence when they use sensitive key names or inline secret assignment patterns. Local retention controls can purge old approvals, jobs, evidence records, and audit events in dependency-safe order.
 
 ## Human Approval Gate
 
-Simulator jobs require an approval artifact before the runner issues a signed envelope. The Qt UI asks for local human confirmation, but the runner still validates that the approval is approved, unexpired, and bound to the same tenant, client, engagement, adapter, and target.
+Simulator jobs require a selected persisted engagement and an approval artifact before the runner issues a signed envelope. The Qt UI asks for local human confirmation, but the runner still validates that the approval is approved, unexpired, single-use for the runner instance, and bound to the same tenant, client, engagement, adapter, and target.
 
 Denied, expired, missing, or mismatched approvals fail closed.
 
@@ -129,13 +131,13 @@ The Qt Guardrails panel and report draft exports include the dashboard.
 
 The repository includes:
 
-- `.github/workflows/p0-verification.yml` for deterministic P0 verification on Linux and Windows with Python 3.12 and 3.13;
-- `.github/workflows/dependency-review.yml` for local SBOM drift enforcement and advisory GitHub dependency review on pull requests;
+- `.github/workflows/p0-verification.yml` for deterministic P0 verification on Linux and Windows with Python 3.12, including project installation and Qt import smoke coverage;
+- `.github/workflows/dependency-review.yml` for local SBOM drift enforcement and fail-closed GitHub dependency review on pull requests;
 - `sbom/masterblaster-p0.spdx.json`, generated by `scripts/generate_sbom.py`;
 - `.github/CODEOWNERS`, `.github/pull_request_template.md`, and `policy/security-sensitive-paths.json`;
 - `scripts/validate_governance.py` and `scripts/scan_prohibited_capabilities.py`.
 
-Maintainers must still enable branch protection, required checks, dependency graph features, and CODEOWNERS-required review in GitHub settings before making remote enforcement claims. Until Dependency graph support is enabled, GitHub dependency review is advisory and the deterministic SBOM check is the required dependency drift gate.
+Maintainers must still enable branch protection, required checks, dependency graph features, and CODEOWNERS-required review in GitHub settings before making remote enforcement claims. Until Dependency graph support is enabled, GitHub dependency review is expected to fail and the P1 gate remains externally blocked.
 
 ## Security Notes
 
@@ -149,4 +151,4 @@ Maintainers must still enable branch protection, required checks, dependency gra
 
 ## Roadmap
 
-Phase P0 should continue by adding tenant/client/engagement management UI, additional fixture adapters, finding/mapping projections, filterable audit/evidence browser widgets, and formal data-flow documentation. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass and repository settings enforce the documented review gates.
+Phase P0 should continue by adding finding/mapping projections, formal data-flow documentation, transitive lock/SBOM hardening, richer headless Qt tests, and verified remote repository enforcement. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass and repository settings enforce the documented review gates.

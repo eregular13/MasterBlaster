@@ -1,0 +1,53 @@
+{
+  "adapter_id": "a1.tls.assessment",
+  "transport": "fake",
+  "allowed_observation_ids": [
+    "tls.protocols",
+    "tls.certificate_chain",
+    "tls.weak_protocols"
+  ],
+  "scenarios": {
+    "healthy": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "tls.protocols",
+          "value": [
+            "TLSv1.2",
+            "TLSv1.3"
+          ]
+        },
+        {
+          "id": "tls.certificate_chain",
+          "value": "fixture-valid-chain"
+        },
+        {
+          "id": "tls.weak_protocols",
+          "value": []
+        }
+      ]
+    },
+    "weak": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "tls.protocols",
+          "value": [
+            "TLSv1.0",
+            "TLSv1.2"
+          ]
+        },
+        {
+          "id": "tls.certificate_chain",
+          "value": "fixture-legacy-chain"
+        },
+        {
+          "id": "tls.weak_protocols",
+          "value": [
+            "TLSv1.0"
+          ]
+        }
+      ]
+    }
+  }
+}

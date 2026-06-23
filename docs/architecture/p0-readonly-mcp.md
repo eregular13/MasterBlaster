@@ -10,7 +10,7 @@
 - read a registered P0 resource;
 - list read-only tool descriptors;
 - render a planning brief;
-- render a report draft from local storage summaries.
+- render a report draft from local storage counts and explicit tenant-scoped summaries.
 
 ## Non-Capabilities
 
@@ -24,11 +24,11 @@ The facade does not expose:
 - policy overrides;
 - target contact.
 
-Unknown tool names fail closed with `UnknownReadOnlyToolError`. Draft tools are rendered with `render_tool(...)`; the facade does not expose a generic command or adapter execution API.
+Unknown tool names fail closed with `UnknownReadOnlyToolError`. Draft tools are rendered with `render_tool(...)`; the facade does not expose a generic command or adapter execution API. Without an explicit tenant scope, report drafts intentionally omit stored audit/evidence rows instead of falling back to a global query.
 
 ## Safety Boundary
 
-The facade is not a trusted authorization boundary. It reads deterministic resources and local storage summaries only. Any future MCP server must delegate to this facade and must not add runnable tools until P0 acceptance gates are complete.
+The facade is not a trusted authorization boundary. It reads deterministic resources and local storage summaries only. Constructing the facade without storage uses an empty read-only view and does not create or migrate a database. Any future MCP server must delegate to this facade and must not add runnable tools until P0 acceptance gates are complete.
 
 ## Regression Coverage
 
@@ -37,4 +37,6 @@ The facade is not a trusted authorization boundary. It reads deterministic resou
 - descriptors are marked non-executing;
 - unknown read-only tool names fail closed;
 - generated drafts retain simulator-only disclaimers;
+- rendering with default storage does not create a database file;
+- generated timestamps can be injected for deterministic tests;
 - the facade does not import `RunnerSimulator` or `runner_simulator`.

@@ -19,6 +19,12 @@ from .p0_policy import (
 APPROVAL_REASON_APPROVED = "APPROVED_FOR_P0_SIMULATION"
 APPROVAL_REASON_DENIED = "DENIED_BY_HUMAN_REVIEW"
 APPROVAL_REASON_EXPIRED = "EXPIRED_BEFORE_RUNNER_VALIDATION"
+MAX_APPROVAL_FUTURE_SKEW_SECONDS = 30
+MAX_APPROVAL_TTL_SECONDS = 3600
+
+
+class ApprovalTransitionError(ValueError):
+    pass
 
 
 def _now(now: datetime | None = None) -> datetime:
@@ -36,6 +42,10 @@ def request_approval(
     now: datetime | None = None,
     ttl_seconds: int = 300,
 ) -> ApprovalRequest:
+    if not requested_by.strip():
+        raise ApprovalTransitionError("approval requester is required")
+    if ttl_seconds <= 0 or ttl_seconds > MAX_APPROVAL_TTL_SECONDS:
+        raise ApprovalTransitionError("approval TTL must be positive and bounded")
     current_time = _now(now)
     return ApprovalRequest(
         approval_id=f"approval-{uuid.uuid4()}",
@@ -56,6 +66,7 @@ def approve_request(
     now: datetime | None = None,
 ) -> ApprovalRequest:
     current_time = _now(now)
+    _ensure_request_can_transition(approval, decided_by, current_time)
     state = "expired" if approval.expires_at <= current_time else "approved"
     reason = APPROVAL_REASON_EXPIRED if state == "expired" else APPROVAL_REASON_APPROVED
     return replace(
@@ -72,22 +83,50 @@ def deny_request(
     decided_by: str = "local-human-approver",
     now: datetime | None = None,
 ) -> ApprovalRequest:
+    current_time = _now(now)
+    _ensure_request_can_transition(approval, decided_by, current_time)
     return replace(
         approval,
         state="denied",
         decided_by=decided_by,
-        decided_at=_now(now),
+        decided_at=current_time,
         decision_reason=APPROVAL_REASON_DENIED,
     )
 
 
 def expire_request(approval: ApprovalRequest, now: datetime | None = None) -> ApprovalRequest:
+    current_time = _now(now)
+    _ensure_request_can_transition(approval, "system-expiry-transition", current_time, allow_system=True)
     return replace(
         approval,
         state="expired",
-        decided_at=_now(now),
+        decided_at=current_time,
         decision_reason=APPROVAL_REASON_EXPIRED,
     )
+
+
+def _ensure_request_can_transition(
+    approval: ApprovalRequest,
+    decided_by: str,
+    current_time: datetime,
+    *,
+    allow_system: bool = False,
+) -> None:
+    if approval.state != "requested":
+        raise ApprovalTransitionError(f"approval is already {approval.state}")
+    if not approval.requested_by.strip():
+        raise ApprovalTransitionError("approval requester is required")
+    if not decided_by.strip():
+        raise ApprovalTransitionError("approval approver is required")
+    if not allow_system and decided_by == approval.requested_by:
+        raise ApprovalTransitionError("approval requester and approver must be distinct")
+    if approval.decided_at is not None or approval.decided_by or approval.decision_reason:
+        raise ApprovalTransitionError("requested approval must not already contain decision fields")
+    if approval.requested_at > current_time + timedelta(seconds=MAX_APPROVAL_FUTURE_SKEW_SECONDS):
+        raise ApprovalTransitionError("approval request timestamp is too far in the future")
+    ttl_seconds = int((approval.expires_at - approval.requested_at).total_seconds())
+    if ttl_seconds <= 0 or ttl_seconds > MAX_APPROVAL_TTL_SECONDS:
+        raise ApprovalTransitionError("approval TTL must be positive and bounded")
 
 
 def validate_approval(
@@ -101,6 +140,9 @@ def validate_approval(
         return PolicyDecision(False, REASON_APPROVAL_REQUIRED, "Human approval is required before job issue.")
 
     current_time = _now(now)
+    structural_error = _approval_structural_error(approval, current_time)
+    if structural_error:
+        return PolicyDecision(False, REASON_APPROVAL_MISMATCH, structural_error)
     try:
         _, normalized_target, _ = parse_target(target)
         _, normalized_approval_target, _ = parse_target(approval.target)
@@ -139,3 +181,30 @@ def validate_approval(
         )
 
     return PolicyDecision(True, REASON_ALLOW, "Human approval validated.", normalized_target)
+
+
+def _approval_structural_error(approval: ApprovalRequest, current_time: datetime) -> str | None:
+    if not approval.approval_id.strip():
+        return "Approval ID is required."
+    if not approval.requested_by.strip():
+        return "Approval requester is required."
+    if approval.requested_at > current_time + timedelta(seconds=MAX_APPROVAL_FUTURE_SKEW_SECONDS):
+        return "Approval request timestamp is too far in the future."
+    ttl_seconds = int((approval.expires_at - approval.requested_at).total_seconds())
+    if ttl_seconds <= 0 or ttl_seconds > MAX_APPROVAL_TTL_SECONDS:
+        return "Approval TTL must be positive and bounded."
+    if approval.state == "requested":
+        if approval.decided_by or approval.decided_at is not None or approval.decision_reason:
+            return "Requested approvals must not include decision fields."
+        return None
+    if approval.decided_at is None:
+        return "Decided approvals must include decided_at."
+    if not (approval.decided_by or "").strip():
+        return "Decided approvals must include decided_by."
+    if not approval.decision_reason.strip():
+        return "Decided approvals must include a decision reason."
+    if approval.decided_by == approval.requested_by:
+        return "Approval requester and approver must be distinct."
+    if approval.decided_at > current_time + timedelta(seconds=MAX_APPROVAL_FUTURE_SKEW_SECONDS):
+        return "Approval decision timestamp is too far in the future."
+    return None

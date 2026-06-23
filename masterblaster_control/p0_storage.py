@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from .p0_models import ApprovalRequest, Engagement, EvidenceRecord
+from .p0_models import ApprovalRequest, Engagement, EvidenceRecord, RulesOfEngagement, ScopeTarget
 from .p0_policy import canonical_json
 from .p0_retention import RetentionPolicy, RetentionResult, redact_for_storage, retention_cutoff
 from .runner_simulator import RunnerResult
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -83,6 +83,13 @@ class P0Storage:
                 "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
                 (2, _utc_timestamp()),
             )
+            current_version = 2
+        if current_version < 3:
+            connection.executescript(_MIGRATION_003)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+                (3, _utc_timestamp()),
+            )
         if self._current_schema_version(connection) != SCHEMA_VERSION:
             raise RuntimeError("P0 storage schema version mismatch")
         connection.commit()
@@ -98,7 +105,7 @@ class P0Storage:
             if result.job:
                 connection.execute(
                     """
-                    INSERT OR REPLACE INTO jobs (
+                    INSERT INTO jobs (
                         job_id, tenant_id, client_id, engagement_id, adapter_id,
                         target, arguments_json, issued_at, expires_at, signature, approval_id,
                         status, decision_reason, decision_message
@@ -115,7 +122,7 @@ class P0Storage:
                         result.job.issued_at.isoformat(),
                         result.job.expires_at.isoformat(),
                         result.job.signature,
-                        result.approval.approval_id if result.approval else None,
+                        result.job.approval_id,
                         result.status,
                         result.decision.reason_code,
                         result.decision.message,
@@ -142,6 +149,67 @@ class P0Storage:
                     "message": result.decision.message,
                 },
             )
+
+    def upsert_engagement(self, engagement: Engagement) -> None:
+        self.initialize()
+        with self.connect() as connection:
+            self._upsert_engagement(connection, engagement)
+
+    def list_tenants(self) -> list[dict[str, Any]]:
+        self.initialize()
+        cursor = self.connect().execute(
+            """
+            SELECT tenant_id, display_name, created_at
+            FROM tenants
+            ORDER BY tenant_id
+            """
+        )
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def list_clients(self, *, tenant_id: str) -> list[dict[str, Any]]:
+        self.initialize()
+        cursor = self.connect().execute(
+            """
+            SELECT client_id, tenant_id, display_name, created_at
+            FROM clients
+            WHERE tenant_id = ?
+            ORDER BY client_id
+            """,
+            (tenant_id,),
+        )
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def list_engagements(self, *, tenant_id: str, client_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        filters = ["tenant_id = ?"]
+        params: list[Any] = [tenant_id]
+        if client_id:
+            filters.append("client_id = ?")
+            params.append(client_id)
+        cursor = self.connect().execute(
+            f"""
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at, updated_at
+            FROM engagements
+            WHERE {' AND '.join(filters)}
+            ORDER BY engagement_id
+            """,
+            tuple(params),
+        )
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def get_engagement(self, *, tenant_id: str, engagement_id: str) -> Engagement | None:
+        self.initialize()
+        row = self.connect().execute(
+            """
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at
+            FROM engagements
+            WHERE tenant_id = ? AND engagement_id = ?
+            """,
+            (tenant_id, engagement_id),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_engagement(row)
 
     def snapshot(self) -> StorageSnapshot:
         self.initialize()
@@ -206,7 +274,33 @@ class P0Storage:
             audit_events_deleted=audit_events_deleted,
         )
 
-    def list_audit_events(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_audit_events(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, Any]]:
+        self.initialize()
+        filters = ["tenant_id = ?"]
+        params: list[Any] = [tenant_id]
+        if engagement_id:
+            filters.append("engagement_id = ?")
+            params.append(engagement_id)
+        params.append(limit)
+        cursor = self.connect().execute(
+            f"""
+            SELECT event_id, tenant_id, engagement_id, action, reason_code, created_at, details_json
+            FROM audit_events
+            WHERE {' AND '.join(filters)}
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        )
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def list_audit_events_admin(self, limit: int = 25) -> list[dict[str, Any]]:
         self.initialize()
         cursor = self.connect().execute(
             """
@@ -219,11 +313,51 @@ class P0Storage:
         )
         return [self._row_to_dict(row) for row in cursor.fetchall()]
 
-    def list_evidence(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_evidence(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, Any]]:
+        self.initialize()
+        filters = ["jobs.tenant_id = ?"]
+        params: list[Any] = [tenant_id]
+        if engagement_id:
+            filters.append("jobs.engagement_id = ?")
+            params.append(engagement_id)
+        params.append(limit)
+        cursor = self.connect().execute(
+            f"""
+            SELECT
+                evidence_records.evidence_id,
+                evidence_records.job_id,
+                evidence_records.approval_id,
+                evidence_records.adapter_id,
+                evidence_records.target,
+                evidence_records.parser_id,
+                evidence_records.parser_version,
+                evidence_records.fixture_id,
+                evidence_records.tool_version,
+                evidence_records.sha256,
+                evidence_records.content_json
+            FROM evidence_records
+            JOIN jobs ON jobs.job_id = evidence_records.job_id
+            WHERE {' AND '.join(filters)}
+            ORDER BY evidence_records.rowid DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        )
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def list_evidence_admin(self, limit: int = 25) -> list[dict[str, Any]]:
         self.initialize()
         cursor = self.connect().execute(
             """
-            SELECT evidence_id, job_id, adapter_id, target, parser_id, tool_version, sha256, content_json
+            SELECT
+                evidence_id, job_id, approval_id, adapter_id, target, parser_id,
+                parser_version, fixture_id, tool_version, sha256, content_json
             FROM evidence_records
             ORDER BY rowid DESC
             LIMIT ?
@@ -238,6 +372,21 @@ class P0Storage:
             self._connection = None
 
     def _upsert_engagement(self, connection: sqlite3.Connection, engagement: Engagement) -> None:
+        existing_client = connection.execute(
+            "SELECT tenant_id FROM clients WHERE client_id = ?",
+            (engagement.client_id,),
+        ).fetchone()
+        if existing_client and existing_client["tenant_id"] != engagement.tenant_id:
+            raise ValueError("client ownership cannot cross tenants")
+        existing_engagement = connection.execute(
+            "SELECT tenant_id, client_id FROM engagements WHERE engagement_id = ?",
+            (engagement.engagement_id,),
+        ).fetchone()
+        if existing_engagement and (
+            existing_engagement["tenant_id"] != engagement.tenant_id
+            or existing_engagement["client_id"] != engagement.client_id
+        ):
+            raise ValueError("engagement ownership cannot cross tenants or clients")
         connection.execute(
             """
             INSERT OR IGNORE INTO tenants(tenant_id, display_name, created_at)
@@ -278,7 +427,7 @@ class P0Storage:
     def _insert_approval(self, connection: sqlite3.Connection, approval: ApprovalRequest) -> None:
         connection.execute(
             """
-            INSERT OR REPLACE INTO approvals(
+            INSERT INTO approvals(
                 approval_id, tenant_id, client_id, engagement_id, adapter_id, target,
                 requested_by, requested_at, expires_at, state, decided_by, decided_at, decision_reason
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -304,16 +453,20 @@ class P0Storage:
         for evidence in evidence_records:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO evidence_records(
-                    job_id, evidence_id, adapter_id, target, parser_id, tool_version, sha256, content_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO evidence_records(
+                    job_id, evidence_id, approval_id, adapter_id, target, parser_id,
+                    parser_version, fixture_id, tool_version, sha256, content_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     evidence.job_id,
                     evidence.evidence_id,
+                    evidence.approval_id,
                     evidence.adapter_id,
                     evidence.target,
                     evidence.parser_id,
+                    evidence.parser_version,
+                    evidence.fixture_id,
                     evidence.tool_version,
                     evidence.sha256,
                     _json(evidence.content),
@@ -358,7 +511,26 @@ class P0Storage:
         for key in ("details_json", "content_json"):
             if key in result and result[key]:
                 result[key.removesuffix("_json")] = json.loads(result.pop(key))
+        for key in ("scope_json", "rules_json"):
+            if key in result and result[key]:
+                result[key.removesuffix("_json")] = json.loads(result.pop(key))
         return result
+
+    def _row_to_engagement(self, row: sqlite3.Row) -> Engagement:
+        scope_items = json.loads(row["scope_json"])
+        rules = json.loads(row["rules_json"])
+        return Engagement(
+            engagement_id=row["engagement_id"],
+            tenant_id=row["tenant_id"],
+            client_id=row["client_id"],
+            authorized_targets=tuple(ScopeTarget(pattern=str(item)) for item in scope_items),
+            rules=RulesOfEngagement(
+                allow_network_transport=bool(rules.get("allow_network_transport", False)),
+                max_runtime_seconds=int(rules.get("max_runtime_seconds", 30)),
+                notes=str(rules.get("notes", "P0 simulator only; no live target access.")),
+            ),
+            expires_at=datetime.fromisoformat(row["expires_at"]),
+        )
 
 
 _MIGRATION_001 = """
@@ -451,4 +623,16 @@ CREATE TABLE approvals (
     decided_at TEXT,
     decision_reason TEXT NOT NULL
 );
+"""
+
+_MIGRATION_003 = """
+ALTER TABLE evidence_records ADD COLUMN approval_id TEXT;
+ALTER TABLE evidence_records ADD COLUMN parser_version TEXT;
+ALTER TABLE evidence_records ADD COLUMN fixture_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_jobs_tenant_engagement
+    ON jobs(tenant_id, engagement_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_tenant_engagement
+    ON audit_events(tenant_id, engagement_id);
 """

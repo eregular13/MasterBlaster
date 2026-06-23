@@ -1,7 +1,10 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from masterblaster_control.p0_approvals import (
+    ApprovalTransitionError,
     approve_request,
     deny_request,
     request_approval,
@@ -68,6 +71,45 @@ def test_approval_bound_to_different_adapter_or_target_fails_closed():
     mismatched = replace(approval, adapter_id="a1.tls.assessment")
 
     decision = validate_approval(mismatched, engagement, "a0.fixture.inventory", "example.com", now=now)
+
+    assert decision.allowed is False
+    assert decision.reason_code == REASON_APPROVAL_MISMATCH
+
+
+def test_approval_state_machine_rejects_repeated_or_conflicted_decisions():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    engagement = build_default_engagement("example.com", now=now)
+    approval = request_approval(engagement, "a0.fixture.inventory", "example.com", now=now)
+    approved = approve_request(approval, now=now)
+
+    with pytest.raises(ApprovalTransitionError, match="already approved"):
+        approve_request(approved, now=now)
+    with pytest.raises(ApprovalTransitionError, match="already approved"):
+        deny_request(approved, now=now)
+
+
+def test_approval_requires_distinct_requester_and_approver():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    engagement = build_default_engagement("example.com", now=now)
+    approval = request_approval(
+        engagement,
+        "a0.fixture.inventory",
+        "example.com",
+        requested_by="same-user",
+        now=now,
+    )
+
+    with pytest.raises(ApprovalTransitionError, match="distinct"):
+        approve_request(approval, decided_by="same-user", now=now)
+
+
+def test_structurally_invalid_approval_fails_closed():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    engagement = build_default_engagement("example.com", now=now)
+    approval = request_approval(engagement, "a0.fixture.inventory", "example.com", now=now)
+    invalid = replace(approval, requested_by="")
+
+    decision = validate_approval(invalid, engagement, "a0.fixture.inventory", "example.com", now=now)
 
     assert decision.allowed is False
     assert decision.reason_code == REASON_APPROVAL_MISMATCH

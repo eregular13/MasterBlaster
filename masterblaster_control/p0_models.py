@@ -114,6 +114,7 @@ class JobEnvelope:
     engagement_id: str
     adapter_id: str
     target: str
+    approval_id: str = ""
     arguments: Mapping[str, str] = field(default_factory=dict)
     issued_at: datetime = field(default_factory=utc_now)
     expires_at: datetime = field(default_factory=utc_now)
@@ -133,9 +134,12 @@ class JobEnvelope:
 class EvidenceRecord:
     evidence_id: str
     job_id: str
+    approval_id: str
     adapter_id: str
     target: str
     parser_id: str
+    parser_version: str
+    fixture_id: str
     tool_version: str
     sha256: str
     content: Mapping[str, Any]

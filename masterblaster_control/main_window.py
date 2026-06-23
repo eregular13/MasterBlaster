@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime
+import json
+from datetime import datetime, timedelta, timezone
 
 from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtGui import QAction, QFont
@@ -26,6 +27,8 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QSplitter,
     QStatusBar,
+    QTableWidget,
+    QTableWidgetItem,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
@@ -37,10 +40,10 @@ from .mcp_definitions import MCPS, get_mcp_by_id
 from .mcp_tab import MCPTab
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_approvals import approve_request, deny_request
-from .p0_models import ApprovalRequest
+from .p0_models import ApprovalRequest, Engagement, EvidenceRecord, RulesOfEngagement, ScopeTarget
 from .p0_resources import resource_summary_markdown
 from .p0_storage import P0Storage, StorageSnapshot
-from .runner_simulator import MANIFESTS, RunnerSimulator
+from .runner_simulator import MANIFESTS, RunnerSimulator, verify_evidence_record
 from .utils import dark_kali_stylesheet, write_watermarked_report
 
 
@@ -91,6 +94,344 @@ class DashboardCard(QFrame):
         )
 
 
+class EngagementManagementPanel(QWidget):
+    """Controlled tenant/client/engagement editor for P0 simulator authorization."""
+
+    def __init__(self, main_window: "MainWindow"):
+        super().__init__()
+        self.main = main_window
+        self._build_ui()
+        self.refresh()
+
+    def _build_ui(self):
+        layout = QHBoxLayout(self)
+
+        lists = QWidget()
+        list_layout = QVBoxLayout(lists)
+        list_layout.addWidget(QLabel("Tenants"))
+        self.tenant_list = QListWidget()
+        self.tenant_list.currentItemChanged.connect(self._tenant_selected)
+        list_layout.addWidget(self.tenant_list)
+        list_layout.addWidget(QLabel("Clients"))
+        self.client_list = QListWidget()
+        self.client_list.currentItemChanged.connect(self._client_selected)
+        list_layout.addWidget(self.client_list)
+        list_layout.addWidget(QLabel("Engagements"))
+        self.engagement_list = QListWidget()
+        self.engagement_list.currentItemChanged.connect(self._engagement_selected)
+        list_layout.addWidget(self.engagement_list)
+        layout.addWidget(lists, 1)
+
+        form = QWidget()
+        form_layout = QFormLayout(form)
+        self.tenant_id_edit = QLineEdit("tenant-local-simulator")
+        self.client_id_edit = QLineEdit("client-local-simulator")
+        self.engagement_id_edit = QLineEdit("engagement-local-simulator")
+        self.authorized_targets_edit = QPlainTextEdit("example.com")
+        self.authorized_targets_edit.setMaximumHeight(90)
+        self.max_runtime_edit = QLineEdit("30")
+        self.expires_at_edit = QLineEdit((datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat())
+        form_layout.addRow("Tenant ID:", self.tenant_id_edit)
+        form_layout.addRow("Client ID:", self.client_id_edit)
+        form_layout.addRow("Engagement ID:", self.engagement_id_edit)
+        form_layout.addRow("authorized_targets:", self.authorized_targets_edit)
+        form_layout.addRow("Max runtime seconds:", self.max_runtime_edit)
+        form_layout.addRow("Expires at:", self.expires_at_edit)
+
+        buttons = QHBoxLayout()
+        self.new_btn = QPushButton("New")
+        self.new_btn.clicked.connect(self._new_engagement)
+        buttons.addWidget(self.new_btn)
+        self.save_btn = QPushButton("Save Engagement")
+        self.save_btn.clicked.connect(self._save_engagement)
+        buttons.addWidget(self.save_btn)
+        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.clicked.connect(self.refresh)
+        buttons.addWidget(self.refresh_btn)
+        form_layout.addRow(buttons)
+
+        self.status_label = QLabel("Create or select a persisted engagement before running simulators.")
+        form_layout.addRow("State:", self.status_label)
+        layout.addWidget(form, 2)
+
+    def refresh(self):
+        self.tenant_list.clear()
+        for tenant in self.main.storage.list_tenants():
+            item = QListWidgetItem(tenant["tenant_id"])
+            item.setData(Qt.ItemDataRole.UserRole, tenant)
+            self.tenant_list.addItem(item)
+        self.client_list.clear()
+        self.engagement_list.clear()
+
+    def _tenant_selected(self, current, previous):
+        self.client_list.clear()
+        self.engagement_list.clear()
+        if not current:
+            return
+        tenant = current.data(Qt.ItemDataRole.UserRole)
+        self.tenant_id_edit.setText(tenant["tenant_id"])
+        for client in self.main.storage.list_clients(tenant_id=tenant["tenant_id"]):
+            item = QListWidgetItem(client["client_id"])
+            item.setData(Qt.ItemDataRole.UserRole, client)
+            self.client_list.addItem(item)
+
+    def _client_selected(self, current, previous):
+        self.engagement_list.clear()
+        if not current:
+            return
+        client = current.data(Qt.ItemDataRole.UserRole)
+        self.client_id_edit.setText(client["client_id"])
+        for engagement in self.main.storage.list_engagements(
+            tenant_id=client["tenant_id"],
+            client_id=client["client_id"],
+        ):
+            item = QListWidgetItem(engagement["engagement_id"])
+            item.setData(Qt.ItemDataRole.UserRole, engagement)
+            self.engagement_list.addItem(item)
+
+    def _engagement_selected(self, current, previous):
+        if not current:
+            return
+        row = current.data(Qt.ItemDataRole.UserRole)
+        engagement = self.main.storage.get_engagement(
+            tenant_id=row["tenant_id"],
+            engagement_id=row["engagement_id"],
+        )
+        if engagement is None:
+            self.status_label.setText("Selected engagement could not be loaded.")
+            return
+        self._load_engagement(engagement)
+        self.main.set_selected_engagement(engagement)
+        self._set_id_fields_locked(True)
+
+    def _load_engagement(self, engagement: Engagement):
+        self.tenant_id_edit.setText(engagement.tenant_id)
+        self.client_id_edit.setText(engagement.client_id)
+        self.engagement_id_edit.setText(engagement.engagement_id)
+        self.authorized_targets_edit.setPlainText("\n".join(scope.pattern for scope in engagement.authorized_targets))
+        self.max_runtime_edit.setText(str(engagement.rules.max_runtime_seconds))
+        self.expires_at_edit.setText(engagement.expires_at.isoformat())
+        self.status_label.setText(f"Selected {engagement.engagement_id}")
+
+    def _new_engagement(self):
+        suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        self.engagement_id_edit.setText(f"engagement-{suffix}")
+        self._set_id_fields_locked(False)
+        self.status_label.setText("New engagement draft. IDs are editable until saved.")
+
+    def _save_engagement(self):
+        try:
+            engagement = self._engagement_from_form()
+        except ValueError as exc:
+            self.status_label.setText(f"Validation error: {exc}")
+            return
+        self.main.storage.upsert_engagement(engagement)
+        self.main.set_selected_engagement(engagement)
+        self._set_id_fields_locked(True)
+        self.status_label.setText(f"Saved and selected {engagement.engagement_id}")
+        self.main.log_message(f"Engagement selected: {engagement.engagement_id} tenant={engagement.tenant_id}")
+        self.refresh()
+        self.main.audit_browser.refresh_filters()
+
+    def _engagement_from_form(self) -> Engagement:
+        tenant_id = self.tenant_id_edit.text().strip()
+        client_id = self.client_id_edit.text().strip()
+        engagement_id = self.engagement_id_edit.text().strip()
+        if not tenant_id or not client_id or not engagement_id:
+            raise ValueError("tenant, client, and engagement IDs are required")
+        targets = tuple(
+            ScopeTarget(pattern=item.strip())
+            for chunk in self.authorized_targets_edit.toPlainText().replace(",", "\n").splitlines()
+            for item in (chunk,)
+            if item.strip()
+        )
+        if not targets:
+            raise ValueError("at least one authorized target is required")
+        try:
+            max_runtime = int(self.max_runtime_edit.text().strip())
+        except ValueError as exc:
+            raise ValueError("max runtime must be an integer") from exc
+        if max_runtime <= 0 or max_runtime > 3600:
+            raise ValueError("max runtime must be between 1 and 3600 seconds")
+        try:
+            expires_at = datetime.fromisoformat(self.expires_at_edit.text().strip())
+        except ValueError as exc:
+            raise ValueError("expires_at must be ISO-8601") from exc
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at <= datetime.now(timezone.utc):
+            raise ValueError("expires_at must be in the future")
+        return Engagement(
+            engagement_id=engagement_id,
+            tenant_id=tenant_id,
+            client_id=client_id,
+            authorized_targets=targets,
+            rules=RulesOfEngagement(allow_network_transport=False, max_runtime_seconds=max_runtime),
+            expires_at=expires_at,
+        )
+
+    def _set_id_fields_locked(self, locked: bool):
+        self.tenant_id_edit.setReadOnly(locked)
+        self.client_id_edit.setReadOnly(locked)
+        self.engagement_id_edit.setReadOnly(locked)
+
+
+class AuditEvidenceBrowser(QWidget):
+    """Tenant-scoped audit/evidence browser with bounded queries and detail JSON."""
+
+    def __init__(self, main_window: "MainWindow"):
+        super().__init__()
+        self.main = main_window
+        self._rows: list[dict[str, object]] = []
+        self._build_ui()
+        self.refresh_filters()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        filters = QGridLayout()
+        filters.addWidget(QLabel("Tenant filter:"), 0, 0)
+        self.tenant_filter = QComboBox()
+        filters.addWidget(self.tenant_filter, 0, 1)
+        filters.addWidget(QLabel("Adapter filter:"), 0, 2)
+        self.adapter_filter = QLineEdit()
+        filters.addWidget(self.adapter_filter, 0, 3)
+        filters.addWidget(QLabel("Job filter:"), 0, 4)
+        self.job_filter = QLineEdit()
+        filters.addWidget(self.job_filter, 0, 5)
+        filters.addWidget(QLabel("Reason code filter:"), 1, 0)
+        self.reason_filter = QLineEdit()
+        filters.addWidget(self.reason_filter, 1, 1)
+        filters.addWidget(QLabel("Outcome filter:"), 1, 2)
+        self.outcome_filter = QLineEdit()
+        filters.addWidget(self.outcome_filter, 1, 3)
+        filters.addWidget(QLabel("date range:"), 1, 4)
+        self.date_range_filter = QLineEdit()
+        self.date_range_filter.setPlaceholderText("YYYY-MM-DD..YYYY-MM-DD")
+        filters.addWidget(self.date_range_filter, 1, 5)
+        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.clicked.connect(self.refresh)
+        filters.addWidget(self.refresh_btn, 0, 6, 2, 1)
+        layout.addLayout(filters)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.table = QTableWidget(0, 7)
+        self.table.setHorizontalHeaderLabels(["Type", "ID", "Adapter", "Job", "Reason", "Created/Target", "Integrity"])
+        self.table.itemSelectionChanged.connect(self._show_selected_detail)
+        splitter.addWidget(self.table)
+        self.detail = QPlainTextEdit()
+        self.detail.setReadOnly(True)
+        splitter.addWidget(self.detail)
+        splitter.setSizes([760, 420])
+        layout.addWidget(splitter)
+        self.status_label = QLabel("Select a tenant filter to load audit/evidence rows without cross-tenant mixing.")
+        layout.addWidget(self.status_label)
+
+    def refresh_filters(self):
+        current = self.tenant_filter.currentData()
+        self.tenant_filter.clear()
+        self.tenant_filter.addItem("Select tenant", None)
+        for tenant in self.main.storage.list_tenants():
+            self.tenant_filter.addItem(tenant["tenant_id"], tenant["tenant_id"])
+        if current:
+            index = self.tenant_filter.findData(current)
+            if index >= 0:
+                self.tenant_filter.setCurrentIndex(index)
+
+    def refresh(self):
+        tenant_id = self.tenant_filter.currentData()
+        self.table.setRowCount(0)
+        self.detail.clear()
+        self._rows = []
+        if not tenant_id:
+            self.status_label.setText("No tenant selected; browser intentionally shows no global results.")
+            return
+        audit_rows = self.main.storage.list_audit_events(tenant_id=tenant_id, limit=50)
+        evidence_rows = self.main.storage.list_evidence(tenant_id=tenant_id, limit=50)
+        rows = [self._audit_row(row) for row in audit_rows] + [self._evidence_row(row) for row in evidence_rows]
+        self._rows = [row for row in rows if self._matches_filters(row)]
+        self.table.setRowCount(len(self._rows))
+        for row_index, row in enumerate(self._rows):
+            values = [
+                row["type"],
+                row["id"],
+                row.get("adapter_id", ""),
+                row.get("job_id", ""),
+                row.get("reason_code", ""),
+                row.get("created_or_target", ""),
+                row.get("integrity", ""),
+            ]
+            for column, value in enumerate(values):
+                self.table.setItem(row_index, column, QTableWidgetItem(str(value)))
+        self.status_label.setText(f"Loaded {len(self._rows)} tenant-scoped row(s), bounded to 50 audit and 50 evidence records.")
+
+    def _audit_row(self, row: dict[str, object]) -> dict[str, object]:
+        details = row.get("details") if isinstance(row.get("details"), dict) else {}
+        return {
+            "type": "audit",
+            "id": row["event_id"],
+            "adapter_id": details.get("adapter_id", ""),
+            "job_id": details.get("job_id", ""),
+            "reason_code": row["reason_code"],
+            "created_or_target": row["created_at"],
+            "integrity": "audit-json",
+            "payload": row,
+        }
+
+    def _evidence_row(self, row: dict[str, object]) -> dict[str, object]:
+        record = EvidenceRecord(
+            evidence_id=str(row["evidence_id"]),
+            job_id=str(row["job_id"]),
+            approval_id=str(row.get("approval_id") or ""),
+            adapter_id=str(row["adapter_id"]),
+            target=str(row["target"]),
+            parser_id=str(row["parser_id"]),
+            parser_version=str(row.get("parser_version") or ""),
+            fixture_id=str(row.get("fixture_id") or ""),
+            tool_version=str(row["tool_version"]),
+            sha256=str(row["sha256"]),
+            content=row["content"],
+        )
+        integrity = "sha256 verified" if verify_evidence_record(record) else "sha256 mismatch"
+        return {
+            "type": "evidence",
+            "id": row["evidence_id"],
+            "adapter_id": row["adapter_id"],
+            "job_id": row["job_id"],
+            "reason_code": "",
+            "created_or_target": row["target"],
+            "integrity": integrity,
+            "payload": row,
+        }
+
+    def _matches_filters(self, row: dict[str, object]) -> bool:
+        for key, field in (
+            ("adapter_id", self.adapter_filter),
+            ("job_id", self.job_filter),
+            ("reason_code", self.reason_filter),
+            ("type", self.outcome_filter),
+        ):
+            needle = field.text().strip().lower()
+            if needle and needle not in str(row.get(key, "")).lower():
+                return False
+        date_range = self.date_range_filter.text().strip()
+        if date_range and row["type"] == "audit":
+            if ".." not in date_range:
+                return False
+            start, end = (part.strip() for part in date_range.split("..", 1))
+            created = str(row.get("created_or_target", ""))[:10]
+            if start and created < start:
+                return False
+            if end and created > end:
+                return False
+        return True
+
+    def _show_selected_detail(self):
+        selected = self.table.currentRow()
+        if selected < 0 or selected >= len(self._rows):
+            return
+        self.detail.setPlainText(json.dumps(self._rows[selected]["payload"], indent=2, sort_keys=True, default=str))
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -104,6 +445,7 @@ class MainWindow(QMainWindow):
         self.runner = RunnerSimulator()
         self.storage = P0Storage.default()
         self.storage.initialize()
+        self.selected_engagement: Engagement | None = None
 
         self.dashboard_cards = {}
         self.workflow_chain = []
@@ -194,6 +536,9 @@ class MainWindow(QMainWindow):
         self.dashboard = self._build_live_dashboard()
         self.main_tabs.addTab(self.dashboard, "Dashboard")
 
+        self.management_panel = EngagementManagementPanel(self)
+        self.main_tabs.addTab(self.management_panel, "Engagements")
+
         self.mcp_tab_widgets = {}
         for mcp in MCPS:
             tab = MCPTab(mcp, self)
@@ -202,6 +547,9 @@ class MainWindow(QMainWindow):
 
         self.mb_bridge = MasterBlasterBridge(self)
         self.main_tabs.addTab(self.mb_bridge, "Guardrails")
+
+        self.audit_browser = AuditEvidenceBrowser(self)
+        self.main_tabs.addTab(self.audit_browser, "Audit Browser")
 
         central_splitter.addWidget(self.main_tabs)
         central_splitter.setStretchFactor(1, 4)
@@ -523,9 +871,25 @@ class MainWindow(QMainWindow):
         self.log_message(f"Approval {denied.approval_id} denied for {denied.adapter_id}")
         return denied
 
+    def set_selected_engagement(self, engagement: Engagement) -> None:
+        self.selected_engagement = engagement
+        self._update_status(f"Selected engagement {engagement.engagement_id}")
+        if not self.global_target and engagement.authorized_targets:
+            self.target_edit.setText(engagement.authorized_targets[0].pattern)
+
+    def current_engagement_for_target(self, target: str) -> Engagement | None:
+        if self.selected_engagement is None:
+            self.log_message("Denied: no persisted engagement selected for simulator execution.")
+            return None
+        if self.selected_engagement.expires_at <= datetime.now(timezone.utc):
+            self.log_message(f"Denied: selected engagement {self.selected_engagement.engagement_id} is expired.")
+            return None
+        return self.selected_engagement
+
     def record_runner_result(self, result) -> StorageSnapshot:
         self.storage.record_runner_result(result)
         snapshot = self.storage.snapshot()
+        self.audit_browser.refresh_filters()
         self.log_message(
             "Storage snapshot: "
             f"{snapshot.approvals} approval(s), {snapshot.jobs} job(s), "
@@ -634,7 +998,7 @@ class MainWindow(QMainWindow):
         )
 
     def _persistent_audit_text(self):
-        events = self.storage.list_audit_events(limit=10)
+        events = self.storage.list_audit_events_admin(limit=10)
         if not events:
             return "(no persistent audit events yet)"
         return "\n".join(
@@ -643,7 +1007,7 @@ class MainWindow(QMainWindow):
         )
 
     def _persistent_evidence_text(self):
-        records = self.storage.list_evidence(limit=10)
+        records = self.storage.list_evidence_admin(limit=10)
         if not records:
             return "(no persistent evidence yet)"
         return "\n".join(

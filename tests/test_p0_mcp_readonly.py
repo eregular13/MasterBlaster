@@ -1,4 +1,5 @@
 import inspect
+from datetime import datetime, timezone
 
 import pytest
 
@@ -56,6 +57,35 @@ def test_report_draft_is_non_certifying_and_uses_storage_snapshot():
     assert "simulator draft only" in result.body
     assert "Tenants: 0" in result.body
     assert "P1 gate" in result.body
+    assert "explicit tenant scope" in result.body
+
+
+def test_report_draft_can_use_explicit_tenant_scope():
+    facade = P0ReadOnlyMCPFacade(P0Storage(":memory:"))
+
+    result = facade.render_tool("report_draft", tenant_id="tenant-local-simulator")
+
+    assert "Tenant scope: tenant-local-simulator" in result.body
+
+
+def test_default_readonly_facade_does_not_create_database_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    facade = P0ReadOnlyMCPFacade()
+
+    result = facade.render_tool("report_draft")
+
+    assert result.non_executing is True
+    assert not (tmp_path / "data" / "masterblaster_p0.sqlite3").exists()
+    assert not hasattr(facade, "storage")
+
+
+def test_readonly_facade_clock_is_injectable_for_deterministic_tests():
+    fixed = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    facade = P0ReadOnlyMCPFacade(clock=lambda: fixed)
+
+    result = facade.render_tool("planning_brief")
+
+    assert result.generated_at == fixed.isoformat()
 
 
 def test_readonly_facade_does_not_import_runner_simulator():

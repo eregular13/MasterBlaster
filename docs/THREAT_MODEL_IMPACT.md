@@ -17,11 +17,11 @@
 
 ## Trust Boundaries
 
-The UI is not trusted for authorization. The runner simulator validates the signed envelope and re-evaluates policy before evidence is emitted.
+The UI is not trusted for authorization. The runner simulator validates the signed envelope and re-evaluates policy before evidence is emitted. The desktop UI must select a persisted engagement before requesting a simulator job.
 
-Human approvals are not trusted because the UI displays them. The runner validates approval state, expiry, tenant, client, engagement, adapter, and target binding before issuing a job envelope.
+Human approvals are not trusted because the UI displays them. The runner validates approval state, expiry, replay, tenant, client, engagement, adapter, and target binding before issuing a job envelope.
 
-The SQLite store is not trusted for authorization. It records runner outcomes after validation and is used only for local audit and report drafting.
+The SQLite store is not trusted for authorization. It records runner outcomes after validation and is used only for local engagement selection, audit, evidence browsing, and report drafting.
 
 P0 resources are not trusted for authorization. They are deterministic templates and checklist content only.
 
@@ -47,14 +47,16 @@ CI and governance files are not trusted authorization boundaries. They provide r
 - MCP surface creep, because the facade only exposes resource reads and draft renderers and unknown tool names fail closed.
 - Secret-bearing or ambiguous URL targets, because userinfo, query strings, and fragments are rejected before job issue.
 - Mutable registry tampering, because the reviewed manifest registry is exposed as a read-only mapping.
+- Manifest/handler drift, because every reviewed manifest must have an exact immutable fixture handler and checked-in fixture file.
+- Cross-tenant evidence browsing, because ordinary audit/evidence reads require tenant scope and global reads are explicit admin methods.
 - Supply-chain drift, because SBOM check mode fails when dependency metadata changes without regenerated SPDX output.
 - Governance drift, because CODEOWNERS, sensitive-path inventory, policy docs, and PR templates are machine-validated.
 - Reintroduction of Python execution/network primitives, because the AST scanner fails on representative forbidden constructs.
 
 ## Threats Remaining
 
-- Persistent tenant/client/engagement storage is only a local skeleton.
+- Persistent tenant/client/engagement management is a local simulator workflow, not a production multi-operator authorization workflow.
 - The local simulator signing key is process-local and intended only for demo validation.
 - Report exports are Markdown drafts and still require downstream review before use.
 - A future MCP network or stdio transport still needs integration tests proving it delegates only to the read-only facade.
-- GitHub remote enforcement settings cannot be proven from repository files alone; maintainers must enable required checks, dependency graph support, and CODEOWNERS-required review. Without Dependency graph support, GitHub dependency review is advisory and cannot be claimed as active vulnerability enforcement.
+- GitHub remote enforcement settings cannot be proven from repository files alone; maintainers must enable required checks, dependency graph support, and CODEOWNERS-required review. Without Dependency graph support, GitHub dependency review fails closed and cannot be claimed as active vulnerability enforcement.

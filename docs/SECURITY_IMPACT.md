@@ -11,8 +11,8 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Replaced Kali tool installation with reviewed manifest validation.
 - Added deny-by-default policy checks for adapter identity, review state, arguments, target type, scope, network transport, engagement expiration, job expiration, and signatures.
 - Added signed, expiring job envelopes that are independently validated by the runner simulator.
-- Added deterministic fixture evidence with SHA-256 content hashes and parser provenance.
-- Added a passive SQLite storage skeleton for validated runner results, evidence, and audit events.
+- Added deterministic fixture evidence with SHA-256 canonical envelope hashes, parser provenance, approval linkage, and fixture scenario binding.
+- Added a passive SQLite storage skeleton for validated runner results, evidence, and audit events, with scoped tenant reads and explicit admin reads.
 - Added a closed non-executing P0 resource registry for planning, reporting, and governance templates.
 - Added a machine-readable acceptance dashboard with evidence links and explicit P1 blockers.
 - Added runner-enforced human approval artifacts before simulator job envelope issuance.
@@ -24,6 +24,8 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Hardened URL target parsing to reject userinfo, query strings, and fragments before simulator job issue.
 - Hardened report draft writing to reject unsafe filesystem prefixes.
 - Made the reviewed manifest registry read-only to external callers.
+- Added explicit immutable adapter handler registration for every reviewed manifest.
+- Added persisted tenant/client/engagement management UI and a tenant-scoped audit/evidence browser.
 
 ## Privileged Behavior
 
@@ -31,4 +33,4 @@ P0 has no privileged live execution behavior. The only "run" action executes in-
 
 ## Residual Risk
 
-The desktop UI still creates a local simulator engagement from the entered target for demonstration. Durable authorization workflows, tenant-aware application queries beyond the local skeleton, and approval workflows remain future P0 work. A future network or stdio MCP transport must delegate to the read-only facade without adding job execution. GitHub branch protection, dependency graph availability, required status checks, and CODEOWNERS-required review must be enabled in repository settings before remote enforcement is claimed. Until Dependency graph is enabled, GitHub dependency review is advisory while the local SBOM drift check remains enforced.
+The desktop UI now requires a persisted selected engagement before simulator execution, but the local management workflow is still a P0 simulator workflow rather than a production multi-operator authorization system. A future network or stdio MCP transport must delegate to the read-only facade without adding job execution. GitHub branch protection, dependency graph availability, required status checks, and CODEOWNERS-required review must be enabled in repository settings before remote enforcement is claimed. Until Dependency graph is enabled, GitHub dependency review is expected to fail while the local SBOM drift check remains enforced.

@@ -9,6 +9,9 @@ from masterblaster_control.p0_policy import (
     REASON_ALLOW,
     REASON_BAD_SIGNATURE,
     REASON_EXPIRED_ENGAGEMENT,
+    REASON_JOB_ARGUMENT_TARGET_MISMATCH,
+    REASON_JOB_CLIENT_MISMATCH,
+    REASON_JOB_TTL_EXCEEDED,
     REASON_TARGET_OUT_OF_SCOPE,
     REASON_TARGET_TYPE,
     REASON_UNKNOWN_ADAPTER,
@@ -71,6 +74,26 @@ def test_url_targets_reject_secret_or_ambiguous_components():
             parse_target(target)
 
 
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://[::1",
+        "https://example.com:bad/",
+        "https://%65xample.com/",
+        "https://example.com/%2e%2e",
+        "https://exa\u043cple.com/",
+        "https://example.com/\x00",
+    ],
+)
+def test_malformed_or_ambiguous_targets_fail_policy_closed(target):
+    engagement = build_default_engagement("example.com")
+    manifest = MANIFESTS["a0.fixture.inventory"]
+
+    decision = evaluate_policy(manifest, engagement, target)
+
+    assert decision.allowed is False
+
+
 def test_expired_engagement_is_denied():
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     engagement = Engagement(
@@ -105,3 +128,54 @@ def test_tampered_signed_job_is_denied():
 
     assert decision.allowed is False
     assert decision.reason_code == REASON_BAD_SIGNATURE
+
+
+def test_signed_job_with_cross_client_binding_is_denied():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = approve_request(request_approval(engagement, "a0.fixture.inventory", "example.com", now=now), now=now)
+    result = runner.run("a0.fixture.inventory", "example.com", engagement=engagement, approval=approval, now=now)
+    assert result.job is not None
+    mismatched = sign_job_envelope(replace(result.job, client_id="client-other", signature=""), bytes(range(32)))
+
+    decision = validate_job_envelope(mismatched, MANIFESTS["a0.fixture.inventory"], engagement, bytes(range(32)), now=now)
+
+    assert decision.allowed is False
+    assert decision.reason_code == REASON_JOB_CLIENT_MISMATCH
+
+
+def test_signed_job_with_target_argument_mismatch_is_denied():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = approve_request(request_approval(engagement, "a0.fixture.inventory", "example.com", now=now), now=now)
+    result = runner.run("a0.fixture.inventory", "example.com", engagement=engagement, approval=approval, now=now)
+    assert result.job is not None
+    mismatched = sign_job_envelope(
+        replace(result.job, arguments={"target": "other.example"}, signature=""),
+        bytes(range(32)),
+    )
+
+    decision = validate_job_envelope(mismatched, MANIFESTS["a0.fixture.inventory"], engagement, bytes(range(32)), now=now)
+
+    assert decision.allowed is False
+    assert decision.reason_code == REASON_JOB_ARGUMENT_TARGET_MISMATCH
+
+
+def test_signed_job_ttl_cannot_exceed_rules_of_engagement():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = approve_request(request_approval(engagement, "a0.fixture.inventory", "example.com", now=now), now=now)
+    result = runner.run("a0.fixture.inventory", "example.com", engagement=engagement, approval=approval, now=now)
+    assert result.job is not None
+    overlong = sign_job_envelope(
+        replace(result.job, expires_at=now + timedelta(seconds=engagement.rules.max_runtime_seconds + 1), signature=""),
+        bytes(range(32)),
+    )
+
+    decision = validate_job_envelope(overlong, MANIFESTS["a0.fixture.inventory"], engagement, bytes(range(32)), now=now)
+
+    assert decision.allowed is False
+    assert decision.reason_code == REASON_JOB_TTL_EXCEEDED

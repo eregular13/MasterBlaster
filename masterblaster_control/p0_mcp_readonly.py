@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Callable, Literal, Protocol
 
 from .p0_acceptance import acceptance_dashboard_markdown, acceptance_summary
 from .p0_resources import P0Resource, list_resources, read_resource, resource_summary_markdown
-from .p0_storage import P0Storage
+from .p0_storage import StorageSnapshot
 
 ToolName = Literal["planning_brief", "report_draft"]
 
@@ -40,6 +40,52 @@ class ReadOnlyToolResult:
         return asdict(self)
 
 
+class ReadOnlyStorageView(Protocol):
+    def snapshot(self) -> StorageSnapshot:
+        ...
+
+    def list_audit_events(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, object]]:
+        ...
+
+    def list_evidence(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, object]]:
+        ...
+
+
+class EmptyReadOnlyStorage:
+    def snapshot(self) -> StorageSnapshot:
+        return StorageSnapshot(0, 0, 0, 0, 0, 0, 0)
+
+    def list_audit_events(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, object]]:
+        return []
+
+    def list_evidence(
+        self,
+        *,
+        tenant_id: str,
+        engagement_id: str | None = None,
+        limit: int = 25,
+    ) -> list[dict[str, object]]:
+        return []
+
+
 _TOOLS: tuple[ReadOnlyToolDescriptor, ...] = (
     ReadOnlyToolDescriptor(
         name="planning_brief",
@@ -63,8 +109,13 @@ class P0ReadOnlyMCPFacade:
     MCP stdio/http wrapper can delegate to without gaining job execution powers.
     """
 
-    def __init__(self, storage: P0Storage | None = None):
-        self.storage = storage or P0Storage.default()
+    def __init__(
+        self,
+        storage: ReadOnlyStorageView | None = None,
+        clock: Callable[[], datetime] | None = None,
+    ):
+        self._storage = storage or EmptyReadOnlyStorage()
+        self._clock = clock or (lambda: datetime.now(timezone.utc))
 
     def list_resource_descriptors(self) -> tuple[dict[str, object], ...]:
         return tuple(resource.to_dict() for resource in list_resources())
@@ -75,13 +126,19 @@ class P0ReadOnlyMCPFacade:
     def list_tool_descriptors(self) -> tuple[dict[str, object], ...]:
         return tuple(tool.to_dict() for tool in _TOOLS)
 
-    def render_tool(self, name: ToolName) -> ReadOnlyToolResult:
+    def render_tool(
+        self,
+        name: ToolName,
+        *,
+        tenant_id: str | None = None,
+        engagement_id: str | None = None,
+    ) -> ReadOnlyToolResult:
         if name not in _TOOL_BY_NAME:
             raise UnknownReadOnlyToolError(f"Unknown read-only P0 tool: {name}")
         if name == "planning_brief":
             return self._planning_brief()
         if name == "report_draft":
-            return self._report_draft()
+            return self._report_draft(tenant_id=tenant_id, engagement_id=engagement_id)
         raise UnknownReadOnlyToolError(f"Unknown read-only P0 tool: {name}")
 
     def _planning_brief(self) -> ReadOnlyToolResult:
@@ -96,10 +153,29 @@ class P0ReadOnlyMCPFacade:
         )
         return self._result("planning_brief", body)
 
-    def _report_draft(self) -> ReadOnlyToolResult:
-        snapshot = self.storage.snapshot()
-        audit_events = self.storage.list_audit_events(limit=10)
-        evidence_records = self.storage.list_evidence(limit=10)
+    def _report_draft(
+        self,
+        *,
+        tenant_id: str | None = None,
+        engagement_id: str | None = None,
+    ) -> ReadOnlyToolResult:
+        snapshot = self._storage.snapshot()
+        if tenant_id:
+            audit_events = self._storage.list_audit_events(
+                tenant_id=tenant_id,
+                engagement_id=engagement_id,
+                limit=10,
+            )
+            evidence_records = self._storage.list_evidence(
+                tenant_id=tenant_id,
+                engagement_id=engagement_id,
+                limit=10,
+            )
+            scope_line = f"Tenant scope: {tenant_id}" + (f" / engagement {engagement_id}" if engagement_id else "")
+        else:
+            audit_events = []
+            evidence_records = []
+            scope_line = "Stored audit/evidence summaries require an explicit tenant scope."
         summary = acceptance_summary()
         audit_lines = "\n".join(
             f"- {event['created_at']} {event['action']} {event['reason_code']}"
@@ -114,6 +190,8 @@ class P0ReadOnlyMCPFacade:
 {_disclaimer()}
 
 ## Storage Snapshot
+
+{scope_line}
 
 - Tenants: {snapshot.tenants}
 - Clients: {snapshot.clients}
@@ -142,7 +220,7 @@ class P0ReadOnlyMCPFacade:
     def _result(self, name: ToolName, body: str) -> ReadOnlyToolResult:
         return ReadOnlyToolResult(
             tool_name=name,
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=self._clock().isoformat(),
             content_type=_TOOL_BY_NAME[name].output_type,
             body=body,
         )
