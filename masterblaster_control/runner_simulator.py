@@ -50,6 +50,7 @@ MANIFESTS: dict[str, AdapterManifest] = {
 class RunnerResult:
     status: str
     decision: PolicyDecision
+    engagement: Engagement
     job: JobEnvelope | None = None
     evidence: tuple[EvidenceRecord, ...] = ()
 
@@ -90,7 +91,7 @@ class RunnerSimulator:
         manifest = MANIFESTS.get(adapter_id)
         decision = evaluate_policy(manifest, engagement, target, arguments, now=current_time)
         if not decision.allowed:
-            return RunnerResult(status="denied", decision=decision)
+            return RunnerResult(status="denied", decision=decision, engagement=engagement)
 
         job = JobEnvelope(
             job_id=f"job-{uuid.uuid4()}",
@@ -113,10 +114,16 @@ class RunnerSimulator:
             now=current_time,
         )
         if not runner_decision.allowed:
-            return RunnerResult(status="denied", decision=runner_decision, job=signed_job)
+            return RunnerResult(status="denied", decision=runner_decision, engagement=engagement, job=signed_job)
 
         evidence = self._simulate_adapter(manifest, signed_job)
-        return RunnerResult(status="completed", decision=runner_decision, job=signed_job, evidence=(evidence,))
+        return RunnerResult(
+            status="completed",
+            decision=runner_decision,
+            engagement=engagement,
+            job=signed_job,
+            evidence=(evidence,),
+        )
 
     def _simulate_adapter(self, manifest: AdapterManifest, job: JobEnvelope) -> EvidenceRecord:
         if manifest.adapter_id == "a1.tls.assessment":

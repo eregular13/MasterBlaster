@@ -39,6 +39,7 @@ Thumbs.db
 # Reports / logs / artifacts
 reports/
 logs/
+data/
 *.log
 *.pcap
 *.cap

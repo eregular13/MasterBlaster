@@ -12,6 +12,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - One offline A0 fixture inventory adapter.
 - One A1 TLS assessment adapter using a fake transport only.
 - Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
+- SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
 - Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
 
 ## Non-Goals in P0
@@ -50,11 +51,24 @@ The reviewed P0 manifests live in `masterblaster_control/runner_simulator.py`:
 
 All UI actions route through these manifests and the runner simulator. There is no generic command execution API.
 
+## Local Storage
+
+The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator state. This database records runner results after policy validation:
+
+- tenant, client, and engagement records;
+- signed job envelopes for allowed simulator runs;
+- hashed fixture evidence;
+- audit events for both denied and completed runs;
+- a migration table and report draft table skeleton.
+
+The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
+
 ## Security Notes
 
 - The UI is not a trusted authorization boundary; the runner re-validates each signed job envelope.
 - Job signing keys are generated in memory for the local simulator and are not logged.
 - Evidence content is deterministic fixture data and is hashed before report inclusion.
+- Persistent audit records are local simulator artifacts and should not contain secrets.
 - Reports are drafts and must not be represented as compliance certification.
 
 ## Roadmap

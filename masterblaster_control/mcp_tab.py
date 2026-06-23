@@ -96,8 +96,19 @@ class MCPTab(QWidget):
             self.main.update_mcp_status(adapter_id, "Running", 30)
 
         result = self.main.runner.run(adapter_id, target, arguments=arguments)
+        try:
+            storage_snapshot = self.main.record_runner_result(result)
+        except Exception as exc:
+            self._finish_denied("DENY_STORAGE_FAILURE", f"Runner result could not be persisted: {exc}")
+            return
+
         decision = result.decision
         self.output.append(f"Policy decision: {decision.reason_code} - {decision.message}")
+        self.output.append(
+            "Storage snapshot: "
+            f"{storage_snapshot.jobs} job(s), {storage_snapshot.evidence_records} evidence record(s), "
+            f"{storage_snapshot.audit_events} audit event(s)"
+        )
 
         if not decision.allowed:
             self._finish_denied(decision.reason_code, decision.message)

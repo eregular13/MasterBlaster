@@ -15,6 +15,19 @@ class ScopeTarget:
 
 
 @dataclass(frozen=True)
+class Tenant:
+    tenant_id: str
+    display_name: str
+
+
+@dataclass(frozen=True)
+class Client:
+    client_id: str
+    tenant_id: str
+    display_name: str
+
+
+@dataclass(frozen=True)
 class RulesOfEngagement:
     allow_network_transport: bool = False
     max_runtime_seconds: int = 30

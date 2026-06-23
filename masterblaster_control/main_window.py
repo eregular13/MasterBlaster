@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 from .masterblaster_bridge import MasterBlasterBridge
 from .mcp_definitions import MCPS, get_mcp_by_id
 from .mcp_tab import MCPTab
+from .p0_storage import P0Storage, StorageSnapshot
 from .runner_simulator import MANIFESTS, RunnerSimulator
 from .utils import dark_kali_stylesheet, write_watermarked_report
 
@@ -97,6 +98,8 @@ class MainWindow(QMainWindow):
         self.watermark_enabled = self.settings.value("watermark", True, type=bool)
         self.ethics_accepted = self.settings.value("ethics_accepted", False, type=bool)
         self.runner = RunnerSimulator()
+        self.storage = P0Storage.default()
+        self.storage.initialize()
 
         self.dashboard_cards = {}
         self.workflow_chain = []
@@ -491,6 +494,16 @@ class MainWindow(QMainWindow):
     def update_intel(self, text):
         self.intel_edit.append(text)
 
+    def record_runner_result(self, result) -> StorageSnapshot:
+        self.storage.record_runner_result(result)
+        snapshot = self.storage.snapshot()
+        self.log_message(
+            "Storage snapshot: "
+            f"{snapshot.jobs} job(s), {snapshot.evidence_records} evidence record(s), "
+            f"{snapshot.audit_events} audit event(s)"
+        )
+        return snapshot
+
     def log_message(self, msg):
         timestamp = datetime.now().isoformat(timespec="seconds")
         self.universal_log.appendPlainText(f"{timestamp} {msg}")
@@ -528,6 +541,15 @@ class MainWindow(QMainWindow):
             "## Audit Log",
             self.universal_log.toPlainText() or "(no log yet)",
             "",
+            "## Storage Snapshot",
+            self._storage_snapshot_text(),
+            "",
+            "## Latest Persistent Audit Events",
+            self._persistent_audit_text(),
+            "",
+            "## Latest Persistent Evidence",
+            self._persistent_evidence_text(),
+            "",
             "## Adapter Outputs",
         ]
         for mid, tab in self.mcp_tab_widgets.items():
@@ -564,7 +586,37 @@ class MainWindow(QMainWindow):
             "expiring, and validated by the runner simulator before fixture evidence is emitted.",
         )
 
+    def _storage_snapshot_text(self):
+        snapshot = self.storage.snapshot()
+        return (
+            f"Tenants: {snapshot.tenants}\n"
+            f"Clients: {snapshot.clients}\n"
+            f"Engagements: {snapshot.engagements}\n"
+            f"Jobs: {snapshot.jobs}\n"
+            f"Evidence records: {snapshot.evidence_records}\n"
+            f"Audit events: {snapshot.audit_events}"
+        )
+
+    def _persistent_audit_text(self):
+        events = self.storage.list_audit_events(limit=10)
+        if not events:
+            return "(no persistent audit events yet)"
+        return "\n".join(
+            f"- {event['created_at']} {event['action']} {event['reason_code']} {event['details']}"
+            for event in events
+        )
+
+    def _persistent_evidence_text(self):
+        records = self.storage.list_evidence(limit=10)
+        if not records:
+            return "(no persistent evidence yet)"
+        return "\n".join(
+            f"- {record['evidence_id']} job={record['job_id']} sha256={record['sha256']}"
+            for record in records
+        )
+
     def closeEvent(self, event):
         self.settings.sync()
         self._stop_all()
+        self.storage.close()
         super().closeEvent(event)
