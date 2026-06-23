@@ -41,8 +41,63 @@ class PluginLoadError(ValueError):
     pass
 
 
-def discover_plugins(plugins_root: str | Path | None = None) -> tuple[PluginManifest, ...]:
+class PluginRegistry:
+    """In-process plugin catalog with optional dev-mode hot-reload."""
+
+    def __init__(self, plugins_root: str | Path | None = None):
+        self.plugins_root = Path(plugins_root or Path("plugins"))
+        self.dev_mode = False
+        self._cache: tuple[PluginManifest, ...] | None = None
+        self._mtimes: dict[str, float] = {}
+
+    def discover(self, *, force: bool = False) -> tuple[PluginManifest, ...]:
+        if force or self._cache is None or (self.dev_mode and self._manifests_changed()):
+            self._cache = _discover_plugins_from_root(self.plugins_root)
+            self._mtimes = self._snapshot_mtimes()
+        return self._cache
+
+    def hot_reload(self) -> tuple[PluginManifest, ...]:
+        self._cache = None
+        return self.discover(force=True)
+
+    def _manifests_changed(self) -> bool:
+        return self._mtimes != self._snapshot_mtimes()
+
+    def _snapshot_mtimes(self) -> dict[str, float]:
+        if not self.plugins_root.exists():
+            return {}
+        return {
+            str(path): path.stat().st_mtime
+            for path in sorted(self.plugins_root.glob("*/plugin.json"))
+        }
+
+
+_default_registry = PluginRegistry()
+
+
+def get_plugin_registry(plugins_root: str | Path | None = None) -> PluginRegistry:
+    global _default_registry
     root = Path(plugins_root or Path("plugins"))
+    if plugins_root is not None and root != _default_registry.plugins_root:
+        return PluginRegistry(root)
+    return _default_registry
+
+
+def set_plugin_dev_mode(enabled: bool, plugins_root: str | Path | None = None) -> None:
+    get_plugin_registry(plugins_root).dev_mode = enabled
+
+
+def reload_plugins(plugins_root: str | Path | None = None) -> tuple[PluginManifest, ...]:
+    return get_plugin_registry(plugins_root).hot_reload()
+
+
+def discover_plugins(plugins_root: str | Path | None = None) -> tuple[PluginManifest, ...]:
+    if plugins_root is not None:
+        return get_plugin_registry(plugins_root).discover()
+    return _default_registry.discover()
+
+
+def _discover_plugins_from_root(root: Path) -> tuple[PluginManifest, ...]:
     if not root.exists():
         return ()
 

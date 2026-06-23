@@ -7,8 +7,9 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBox
 from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
-from .p7_plugins import discover_plugins, plugin_catalog_markdown
+from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
 from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
+from .p8_workflow_assistant import assistant_markdown
 from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS
 
@@ -59,11 +60,24 @@ class MasterBlasterBridge(QWidget):
         row2.addWidget(self.plugins_btn)
 
         self.workflow_btn = QPushButton("Generate Workflow Draft")
+        self.workflow_btn.setToolTip("Build a non-executing workflow draft for the active engagement.")
         self.workflow_btn.clicked.connect(self.show_workflow_draft)
         row2.addWidget(self.workflow_btn)
 
+        self.assistant_btn = QPushButton("Enrich with Assistant")
+        self.assistant_btn.setToolTip("Add deterministic planning suggestions — no LLM, no execution.")
+        self.assistant_btn.clicked.connect(self.show_assistant_enrichment)
+        row2.addWidget(self.assistant_btn)
+
+        row3 = QHBoxLayout()
+        self.hot_reload_btn = QPushButton("Hot-Reload Plugins")
+        self.hot_reload_btn.setToolTip("Re-scan plugin manifests from disk (dev mode).")
+        self.hot_reload_btn.clicked.connect(self.hot_reload_plugins)
+        row3.addWidget(self.hot_reload_btn)
+
         lay.addLayout(buttons)
         lay.addLayout(row2)
+        lay.addLayout(row3)
 
         self.refresh_scripts()
 
@@ -102,6 +116,20 @@ class MasterBlasterBridge(QWidget):
         engagement = resolve_engagement(self.main.storage, getattr(self.main, "selected_engagement_id", "") or None, target)
         draft = generate_workflow_draft(engagement)
         self.output.append(workflow_draft_markdown(draft))
+
+    def show_assistant_enrichment(self):
+        self.output.clear()
+        target = getattr(self.main, "global_target", "") or "example.com"
+        engagement = resolve_engagement(self.main.storage, getattr(self.main, "selected_engagement_id", "") or None, target)
+        draft = generate_workflow_draft(engagement)
+        self.output.append(assistant_markdown(draft))
+
+    def hot_reload_plugins(self):
+        set_plugin_dev_mode(True)
+        plugins = reload_plugins()
+        self.output.clear()
+        self.output.append(f"Hot-reloaded {len(plugins)} plugin manifest(s).")
+        self.output.append(plugin_catalog_markdown(plugins))
 
     def _launch_selected(self):
         self.output.append("Denied: P0 does not allow direct script execution.")

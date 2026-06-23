@@ -44,10 +44,18 @@ def list_phase_progress() -> tuple[PhaseProgress, ...]:
         PhaseProgress(
             "P8",
             "Enterprise horizon",
-            15,
+            65,
             "in_progress",
-            ("multi_tenant_auth", "hsm_signing", "live_adapter_governance"),
-            "Auth, HSM keys, governed live adapters — post-v1.0 roadmap.",
+            ("hsm_signing", "signed_installer"),
+            "MCP stdio, local auth, hot-reload, assistant, Pages, installer CI.",
+        ),
+        PhaseProgress(
+            "P9",
+            "Governed live adapters",
+            0,
+            "not_started",
+            ("a7_review", "live_transport_governance"),
+            "A7 live adapter ADR, pen-test pack, star campaign — post-P8.",
         ),
     )
 

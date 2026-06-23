@@ -45,6 +45,8 @@ from .p0_storage import P0Storage, StorageSnapshot
 from .p3_reporting import compliance_draft_markdown, export_compliance_draft_json, generate_compliance_draft
 from .p7_workflow_generator import export_workflow_draft_json, generate_workflow_draft, workflow_draft_markdown
 from .p4_security import KeyStore, RBAC
+from .p8_auth import LocalAuthStore
+from .p8_workflow_assistant import assistant_markdown
 from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS, RunnerSimulator
 from .storage_browser import StorageBrowser
@@ -108,7 +110,8 @@ class MainWindow(QMainWindow):
         self.global_target = ""
         self.watermark_enabled = self.settings.value("watermark", True, type=bool)
         self.ethics_accepted = self.settings.value("ethics_accepted", False, type=bool)
-        self.rbac = RBAC()
+        self.auth_store = LocalAuthStore()
+        self.rbac = self._load_rbac_from_settings()
         self.runner = RunnerSimulator(signing_key=KeyStore().load_or_create())
         self.storage = P0Storage.default()
         self.storage.initialize()
@@ -173,6 +176,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction("Export Compliance Draft (Markdown)", self._export_compliance_md)
         file_menu.addAction("Export Workflow Draft (JSON)", self._export_workflow_json)
         file_menu.addAction("Export Workflow Draft (Markdown)", self._export_workflow_md)
+        file_menu.addAction("Export Assistant Enrichment (Markdown)", self._export_assistant_md)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
         exit_action = QAction("Exit", self)
@@ -641,6 +645,13 @@ class MainWindow(QMainWindow):
     def get_active_engagement(self, target: str):
         return resolve_engagement(self.storage, self.selected_engagement_id or None, target)
 
+    def _load_rbac_from_settings(self) -> RBAC:
+        user_id = self.settings.value("local_user_id", "operator", type=str)
+        try:
+            return self.auth_store.authenticate(user_id)
+        except PermissionError:
+            return self.auth_store.authenticate("operator")
+
     def _open_settings(self):
         from PySide6.QtWidgets import QDialog, QSpinBox
 
@@ -652,11 +663,14 @@ class MainWindow(QMainWindow):
         wm_cb.toggled.connect(lambda value: setattr(self, "watermark_enabled", value))
         lay.addWidget(wm_cb)
 
-        role_combo = QComboBox()
-        role_combo.addItems(["viewer", "operator", "admin"])
-        role_combo.setCurrentText(self.rbac.principal.role)
-        lay.addWidget(QLabel("RBAC role (local simulator)"))
-        lay.addWidget(role_combo)
+        users = self.auth_store.load_users()
+        user_combo = QComboBox()
+        for user in users:
+            user_combo.addItem(f"{user.display_name} ({user.role})", user.user_id)
+        current_index = max(0, user_combo.findData(self.rbac.principal.user_id))
+        user_combo.setCurrentIndex(current_index)
+        lay.addWidget(QLabel("Local user (P8 auth skeleton)"))
+        lay.addWidget(user_combo)
 
         lay.addWidget(QLabel("Retention presets (days)"))
         audit_days = QSpinBox()
@@ -697,8 +711,9 @@ class MainWindow(QMainWindow):
 
         close_btn = QPushButton("Close")
         def _close():
-            from .p4_security import Principal
-            self.rbac = RBAC(Principal(user_id="local-user", role=role_combo.currentText()))
+            user_id = user_combo.currentData()
+            self.rbac = self.auth_store.authenticate(user_id)
+            self.settings.setValue("local_user_id", user_id)
             self.settings.setValue("retention_audit_days", audit_days.value())
             self.settings.setValue("retention_evidence_days", evidence_days.value())
             dlg.accept()
@@ -733,6 +748,13 @@ class MainWindow(QMainWindow):
         path = write_watermarked_report(workflow_draft_markdown(draft), self.watermark_enabled, prefix="workflow_draft")
         self.log_message(f"Workflow draft Markdown exported to {path}")
         QMessageBox.information(self, "Export", f"Workflow draft Markdown:\n{path}")
+
+    def _export_assistant_md(self):
+        engagement = self.get_active_engagement(self.global_target or "example.com")
+        draft = generate_workflow_draft(engagement)
+        path = write_watermarked_report(assistant_markdown(draft), self.watermark_enabled, prefix="workflow_assistant")
+        self.log_message(f"Assistant enrichment exported to {path}")
+        QMessageBox.information(self, "Export", f"Assistant enrichment:\n{path}")
 
     def _show_about(self):
         QMessageBox.information(
