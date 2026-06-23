@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "plugin_id": "plugin.builtin.reporting",
+  "name": "Built-in Reporting Extensions",
+  "version": "1.0.0",
+  "min_core_version": "1.0.0",
+  "reviewed": true,
+  "non_executing": true,
+  "description": "Non-executing reporting templates and compliance draft helpers for v1.0.",
+  "adapter_ids": [],
+  "resource_uris": [
+    "p0://reporting/report-draft-outline",
+    "p0://governance/acceptance-checklist"
+  ]
+}
