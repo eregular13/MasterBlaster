@@ -19,3 +19,7 @@ dev = [
 
 [tool.setuptools.package-data]
 masterblaster_control = ["fixtures/*.json"]
+
+[tool.setuptools.packages.find]
+include = ["masterblaster_control*"]
+namespaces = false
