@@ -8,8 +8,8 @@ from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
 from .mcp_catalog import catalog_markdown
-from .mcp_tool_arsenal import DEFAULT_ASSAULT_CHAIN, FULL_ASSAULT_CHAIN, arsenal_markdown
-from .warlord_orchestrator import execute_warlord_chain, warlord_chain_markdown
+from .mcp_tool_arsenal import DEFAULT_ASSAULT_CHAIN, FULL_ASSAULT_CHAIN, FULL_REGISTRY_QUEUE, arsenal_markdown
+from .warlord_orchestrator import execute_registry_queue, execute_warlord_chain, registry_queue_markdown, warlord_chain_markdown
 from .p10_marketplace import marketplace_markdown
 from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
 from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
@@ -80,6 +80,11 @@ class MasterBlasterBridge(QWidget):
         self.full_whip_btn.setToolTip("Execute 12-MCP full assault chain — recon through evidence.")
         self.full_whip_btn.clicked.connect(self.crack_full_assault_chain)
         row2.addWidget(self.full_whip_btn)
+
+        self.registry_btn = QPushButton("Crack Registry (22)")
+        self.registry_btn.setToolTip("Deploy all 22 MCPs in catalog order — full registry queue.")
+        self.registry_btn.clicked.connect(self.crack_registry_queue)
+        row2.addWidget(self.registry_btn)
 
         self.plugins_btn = QPushButton("Plugin Catalog")
         self.plugins_btn.clicked.connect(self.show_plugin_catalog)
@@ -164,6 +169,19 @@ class MasterBlasterBridge(QWidget):
 
     def crack_full_assault_chain(self):
         self._execute_chain(FULL_ASSAULT_CHAIN)
+
+    def crack_registry_queue(self):
+        self.output.clear()
+        target = getattr(self.main, "global_target", "") or "example.com"
+        runner = getattr(self.main, "runner", RunnerSimulator())
+        engagement = resolve_engagement(
+            self.main.storage,
+            getattr(self.main, "selected_engagement_id", "") or None,
+            target,
+        )
+        result = execute_registry_queue(runner, engagement, target)
+        self.output.append(registry_queue_markdown(result))
+        self.output.append(f"\n> {len(FULL_REGISTRY_QUEUE)} MCPs deployed. {result.completed} landed.")
 
     def _execute_chain(self, chain: tuple[str, ...]):
         self.output.clear()

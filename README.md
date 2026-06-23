@@ -98,6 +98,9 @@ python scripts/demo_warlord_chain.py example.com
 
 # Full assault — 12 MCPs, 30+ tools chained
 python scripts/demo_warlord_full_chain.py example.com
+
+# Total domination — all 22 MCPs in registry order
+python scripts/demo_warlord_registry_queue.py example.com
 ```
 
 **Sample chain:**
@@ -172,7 +175,7 @@ curl http://127.0.0.1:8765/health
 
 ## ⚙️ Power Features
 
-- **Crack the Whip — All MCPs** — parallel queue across the full registry
+- **Crack the Whip — All MCPs** — 22-MCP registry queue in catalog order with live dashboard updates
 - **Assault chain orchestrator** — 8-step fast strike or 12-step full assault chain
 - **Kali tool bindings** — 66+ tools mapped to MCP slots
 - **Records + evidence vault** — every strike hashed and stored

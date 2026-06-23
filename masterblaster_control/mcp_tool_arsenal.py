@@ -44,6 +44,9 @@ DEFAULT_ASSAULT_CHAIN: tuple[str, ...] = (
 )
 
 # Full warlord strike — 12 MCPs, 30+ tool bindings across recon → network → web → API → evidence
+# Entire 22-MCP registry — parallel queue target for "Crack the Whip — All MCPs"
+FULL_REGISTRY_QUEUE: tuple[str, ...] = MCP_CATALOG_ORDER
+
 FULL_ASSAULT_CHAIN: tuple[str, ...] = (
     "mcp.recon.osint",
     "mcp.recon.subdomain",

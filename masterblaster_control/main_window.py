@@ -44,8 +44,16 @@ from .p0_retention import RetentionPolicy
 from .p0_storage import P0Storage, StorageSnapshot
 from .p3_reporting import compliance_draft_markdown, export_compliance_draft_json, generate_compliance_draft
 from .p7_workflow_generator import export_workflow_draft_json, generate_workflow_draft, workflow_draft_markdown
-from .warlord_orchestrator import execute_warlord_chain, warlord_chain_json, warlord_chain_markdown
-from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN
+from .warlord_orchestrator import (
+    WarlordChainResult,
+    execute_registry_queue,
+    execute_warlord_chain,
+    execute_warlord_step,
+    registry_queue_markdown,
+    warlord_chain_json,
+    warlord_chain_markdown,
+)
+from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN, FULL_REGISTRY_QUEUE
 from .p4_security import KeyStore, RBAC
 from .p8_auth import LocalAuthStore
 from .p8_workflow_assistant import assistant_markdown
@@ -123,6 +131,8 @@ class MainWindow(QMainWindow):
         self.workflow_chain = []
         self._batch_running = False
         self._batch_queue = []
+        self._batch_step_index = 0
+        self._registry_results = []
         self._workflow_running = False
         self._workflow_queue = []
         self._current_workflow_step = None
@@ -183,7 +193,9 @@ class MainWindow(QMainWindow):
         warlord_menu = self.menuBar().addMenu("&Warlord")
         warlord_menu.addAction("Crack Assault Chain (8 MCPs)", self._crack_assault_chain)
         warlord_menu.addAction("Crack Full Assault Chain (12 MCPs)", self._crack_full_assault_chain)
+        warlord_menu.addAction("Crack Registry Queue (22 MCPs)", self._run_all_mcps)
         warlord_menu.addAction("Export Warlord Chain Report (Markdown)", self._export_warlord_chain_md)
+        warlord_menu.addAction("Export Registry Queue Report (Markdown)", self._export_registry_queue_md)
         warlord_menu.addAction("Export Warlord Chain Telemetry (JSON)", self._export_warlord_chain_json)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
@@ -360,16 +372,30 @@ class MainWindow(QMainWindow):
 
     def _run_all_mcps(self):
         if self._batch_running:
-            self.log_message("Run queue already in progress.")
+            self.log_message("Registry queue already in progress.")
             return
         if self._workflow_running:
-            self.log_message("Cannot start run queue while workflow is active.")
+            self.log_message("Cannot start registry queue while workflow is active.")
+            return
+        target = self.global_target or "example.com"
+        decision = QMessageBox.question(
+            self,
+            "Crack the Whip — All 22 MCPs",
+            f"Deploy the full 22-MCP registry queue against `{target}`?\n\n"
+            "Every MCP strikes in catalog order — scoped, auto-approved, evidence-captured.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if decision != QMessageBox.StandardButton.Yes:
             return
         self._batch_running = True
-        self._batch_queue = list(self.mcp_tab_widgets.keys())
+        self._batch_queue = list(FULL_REGISTRY_QUEUE)
+        self._batch_step_index = 0
+        self._registry_results = []
         self.run_all_btn.setEnabled(False)
         self.stop_all_btn.setEnabled(True)
-        self.log_message("=== Starting P0 simulator queue ===")
+        self.log_message(f"=== Warlord registry queue — {len(FULL_REGISTRY_QUEUE)} MCPs under the whip ===")
+        self._update_status(f"Cracking whip on 22 MCPs → {target}")
         self._advance_batch()
 
     def _advance_batch(self):
@@ -378,28 +404,64 @@ class MainWindow(QMainWindow):
         if not self._batch_queue:
             self._finish_batch()
             return
-        mcp_id = self._batch_queue.pop(0)
-        tab = self.mcp_tab_widgets.get(mcp_id)
-        if tab:
-            self.log_message(f"Queue launching {mcp_id}")
-            tab.execute()
-        else:
-            QTimer.singleShot(50, self._advance_batch)
+        adapter_id = self._batch_queue.pop(0)
+        self._batch_step_index += 1
+        total = len(FULL_REGISTRY_QUEUE)
+        self.log_message(f"Registry queue [{self._batch_step_index}/{total}] lashing {adapter_id}")
+        self.update_mcp_status(adapter_id, "Running", 40)
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        step, runner_result = execute_warlord_step(
+            self.runner,
+            engagement,
+            target,
+            adapter_id,
+            self._batch_step_index,
+        )
+        self._registry_results.append(step)
+        if runner_result is not None:
+            try:
+                self.record_runner_result(runner_result)
+            except Exception as exc:
+                self.log_message(f"Storage warning for {adapter_id}: {exc}")
+        ui_status = "Success" if step.status == "completed" else "Denied"
+        self.update_mcp_status(adapter_id, ui_status, 100, result=step.reason_code)
 
     def _finish_batch(self):
         self._batch_running = False
         self._batch_queue = []
-        self.log_message("=== P0 simulator queue complete ===")
-        self.update_intel("[QUEUE] All reviewed simulator adapters completed or denied.")
+        completed = sum(1 for step in self._registry_results if step.status == "completed")
+        denied = len(self._registry_results) - completed
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        result = WarlordChainResult(
+            target=target,
+            engagement_id=engagement.engagement_id,
+            chain=FULL_REGISTRY_QUEUE,
+            steps=tuple(self._registry_results),
+            completed=completed,
+            denied=denied,
+        )
+        self.log_message(
+            f"=== Registry queue complete — {completed}/{len(FULL_REGISTRY_QUEUE)} landed, {denied} denied ==="
+        )
+        self.update_intel(f"[REGISTRY QUEUE] {completed} completed, {denied} denied across 22 MCPs.")
+        self._switch_to_masterblaster_bridge()
+        self.mb_bridge.output.clear()
+        self.mb_bridge.output.append(registry_queue_markdown(result))
         self.run_all_btn.setEnabled(True)
+        self._registry_results = []
+        self._batch_step_index = 0
         self._refresh_stop_button()
-        self._update_status("P0 simulator queue complete")
+        self._update_status(f"Whip cracked — {completed}/22 MCPs dominated")
 
     def _stop_all(self):
         stopped_batch = self._batch_running
         stopped_workflow = self._workflow_running
         self._batch_running = False
         self._batch_queue = []
+        self._registry_results = []
+        self._batch_step_index = 0
         self._workflow_running = False
         self._workflow_queue = []
         self._current_workflow_step = None
@@ -800,6 +862,16 @@ class MainWindow(QMainWindow):
         path = write_export_file(warlord_chain_json(result), "warlord_chain", "json")
         self.log_message(f"Warlord chain JSON exported to {path}")
         QMessageBox.information(self, "Export", f"Warlord chain telemetry:\n{path}")
+
+    def _export_registry_queue_md(self):
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        result = execute_registry_queue(self.runner, engagement, target)
+        path = write_watermarked_report(
+            registry_queue_markdown(result), self.watermark_enabled, prefix="registry_queue"
+        )
+        self.log_message(f"Registry queue report exported to {path}")
+        QMessageBox.information(self, "Export", f"Registry queue report:\n{path}")
 
     def _show_about(self):
         QMessageBox.information(
