@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from .p0_models import ApprovalRequest, Engagement, EvidenceRecord
+from .p0_models import ApprovalRequest, Engagement, EvidenceRecord, RulesOfEngagement, ScopeTarget
 from .p0_policy import canonical_json
 from .p0_retention import RetentionPolicy, RetentionResult, redact_for_storage, retention_cutoff
 from .runner_simulator import RunnerResult
@@ -206,31 +206,248 @@ class P0Storage:
             audit_events_deleted=audit_events_deleted,
         )
 
-    def list_audit_events(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_tenants(self, limit: int = 50) -> list[dict[str, Any]]:
         self.initialize()
         cursor = self.connect().execute(
             """
-            SELECT event_id, tenant_id, engagement_id, action, reason_code, created_at, details_json
-            FROM audit_events
+            SELECT tenant_id, display_name, created_at
+            FROM tenants
             ORDER BY created_at DESC
             LIMIT ?
             """,
             (limit,),
         )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_clients(self, limit: int = 50, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT client_id, tenant_id, display_name, created_at
+            FROM clients
+        """
+        params: list[Any] = []
+        if tenant_id:
+            query += " WHERE tenant_id = ?"
+            params.append(tenant_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_engagements(self, limit: int = 50, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at, updated_at
+            FROM engagements
+        """
+        params: list[Any] = []
+        if tenant_id:
+            query += " WHERE tenant_id = ?"
+            params.append(tenant_id)
+        query += " ORDER BY updated_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        rows = [self._row_to_dict(row) for row in cursor.fetchall()]
+        for row in rows:
+            row["scope"] = row.pop("scope", [])
+            row["rules"] = row.pop("rules", {})
+        return rows
+
+    def list_jobs(self, limit: int = 50, adapter_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT job_id, tenant_id, client_id, engagement_id, adapter_id, target,
+                   issued_at, expires_at, status, decision_reason, decision_message, approval_id
+            FROM jobs
+        """
+        params: list[Any] = []
+        if adapter_id:
+            query += " WHERE adapter_id = ?"
+            params.append(adapter_id)
+        query += " ORDER BY issued_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_audit_events(
+        self,
+        limit: int = 25,
+        action: str | None = None,
+        reason_code: str | None = None,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT event_id, tenant_id, engagement_id, action, reason_code, created_at, details_json
+            FROM audit_events
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+        if action:
+            clauses.append("action = ?")
+            params.append(action)
+        if reason_code:
+            clauses.append("reason_code = ?")
+            params.append(reason_code)
+        if search:
+            clauses.append("details_json LIKE ?")
+            params.append(f"%{search}%")
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
         return [self._row_to_dict(row) for row in cursor.fetchall()]
 
-    def list_evidence(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_evidence(
+        self,
+        limit: int = 25,
+        adapter_id: str | None = None,
+        job_id: str | None = None,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
         self.initialize()
-        cursor = self.connect().execute(
+        query = """
+            SELECT evidence_id, job_id, adapter_id, target, parser_id, tool_version, sha256, content_json
+            FROM evidence_records
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+        if adapter_id:
+            clauses.append("adapter_id = ?")
+            params.append(adapter_id)
+        if job_id:
+            clauses.append("job_id = ?")
+            params.append(job_id)
+        if search:
+            clauses.append("(target LIKE ? OR sha256 LIKE ? OR evidence_id LIKE ? OR job_id LIKE ?)")
+            pattern = f"%{search}%"
+            params.extend([pattern, pattern, pattern, pattern])
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY rowid DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def get_evidence(self, evidence_id: str) -> dict[str, Any] | None:
+        self.initialize()
+        row = self.connect().execute(
             """
             SELECT evidence_id, job_id, adapter_id, target, parser_id, tool_version, sha256, content_json
             FROM evidence_records
-            ORDER BY rowid DESC
-            LIMIT ?
+            WHERE evidence_id = ?
             """,
-            (limit,),
+            (evidence_id,),
+        ).fetchone()
+        return self._row_to_dict(row) if row else None
+
+    def create_tenant(self, tenant_id: str, display_name: str) -> None:
+        self.initialize()
+        tenant_id = tenant_id.strip()
+        display_name = display_name.strip() or tenant_id
+        if not tenant_id:
+            raise ValueError("tenant_id is required")
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO tenants(tenant_id, display_name, created_at)
+                VALUES (?, ?, ?)
+                """,
+                (tenant_id, display_name, _utc_timestamp()),
+            )
+
+    def create_client(self, client_id: str, tenant_id: str, display_name: str) -> None:
+        self.initialize()
+        client_id = client_id.strip()
+        tenant_id = tenant_id.strip()
+        display_name = display_name.strip() or client_id
+        if not client_id or not tenant_id:
+            raise ValueError("client_id and tenant_id are required")
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO clients(client_id, tenant_id, display_name, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (client_id, tenant_id, display_name, _utc_timestamp()),
+            )
+
+    def save_engagement(self, engagement: Engagement) -> None:
+        self.initialize()
+        with self.connect() as connection:
+            self._upsert_engagement(connection, engagement)
+
+    def get_engagement(self, engagement_id: str) -> dict[str, Any] | None:
+        self.initialize()
+        row = self.connect().execute(
+            """
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at, updated_at
+            FROM engagements WHERE engagement_id = ?
+            """,
+            (engagement_id,),
+        ).fetchone()
+        if not row:
+            return None
+        result = self._row_to_dict(row)
+        result["scope"] = result.pop("scope", [])
+        result["rules"] = result.pop("rules", {})
+        return result
+
+    def engagement_to_model(self, row: dict[str, Any]) -> Engagement:
+        rules = row.get("rules", {})
+        expires_at = datetime.fromisoformat(row["expires_at"])
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return Engagement(
+            engagement_id=row["engagement_id"],
+            tenant_id=row["tenant_id"],
+            client_id=row["client_id"],
+            authorized_targets=tuple(ScopeTarget(pattern=item) for item in row.get("scope", [])),
+            rules=RulesOfEngagement(
+                allow_network_transport=bool(rules.get("allow_network_transport", False)),
+                max_runtime_seconds=int(rules.get("max_runtime_seconds", 30)),
+                notes=str(rules.get("notes", "")),
+            ),
+            expires_at=expires_at,
         )
-        return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def delete_engagement(self, engagement_id: str) -> int:
+        self.initialize()
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                "DELETE FROM evidence_records WHERE job_id IN (SELECT job_id FROM jobs WHERE engagement_id = ?)",
+                (engagement_id,),
+            )
+            connection.execute("DELETE FROM jobs WHERE engagement_id = ?", (engagement_id,))
+            connection.execute("DELETE FROM approvals WHERE engagement_id = ?", (engagement_id,))
+            connection.execute("DELETE FROM audit_events WHERE engagement_id = ?", (engagement_id,))
+            cursor = connection.execute("DELETE FROM engagements WHERE engagement_id = ?", (engagement_id,))
+            return cursor.rowcount
+
+    def export_audit_events_csv(self, limit: int = 500) -> str:
+        events = self.list_audit_events(limit=limit)
+        lines = ["event_id,tenant_id,engagement_id,action,reason_code,created_at,details"]
+        for event in events:
+            details = json.dumps(event.get("details", {}), sort_keys=True)
+            row = [
+                event["event_id"],
+                event["tenant_id"],
+                event["engagement_id"],
+                event["action"],
+                event["reason_code"],
+                event["created_at"],
+                details,
+            ]
+            lines.append(",".join(f'"{str(value).replace(chr(34), chr(34) * 2)}"' for value in row))
+        return "\n".join(lines) + "\n"
+
+    def export_evidence_json(self, limit: int = 500) -> str:
+        records = self.list_evidence(limit=limit)
+        return json.dumps(records, indent=2, sort_keys=True) + "\n"
 
     def close(self) -> None:
         if self._connection is not None:
@@ -355,7 +572,7 @@ class P0Storage:
 
     def _row_to_dict(self, row: sqlite3.Row) -> dict[str, Any]:
         result = dict(row)
-        for key in ("details_json", "content_json"):
+        for key in ("details_json", "content_json", "scope_json", "rules_json"):
             if key in result and result[key]:
                 result[key.removesuffix("_json")] = json.loads(result.pop(key))
         return result

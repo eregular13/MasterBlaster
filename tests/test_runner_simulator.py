@@ -72,3 +72,68 @@ def test_tls_fake_transport_completes_for_domain_target():
 def test_manifest_registry_is_immutable_to_callers():
     with pytest.raises(TypeError):
         MANIFESTS["evil.live.adapter"] = MANIFESTS["a0.fixture.inventory"]  # type: ignore[index]
+
+
+def test_dns_posture_fixture_completes_for_domain_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a2.dns.posture", "example.com", now)
+
+    result = runner.run("a2.dns.posture", "example.com", engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    assert result.decision.reason_code == REASON_ALLOW
+    assert result.evidence[0].content["transport"] == "none"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "dns.spf" in observation_ids
+    assert "dns.dmarc" in observation_ids
+
+
+def test_http_headers_fixture_completes_for_url_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    target = "https://example.com/"
+    engagement = build_default_engagement(target, now=now)
+    approval = _approved(engagement, "a3.http.headers", target, now)
+
+    result = runner.run("a3.http.headers", target, engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "http.strict_transport_security" in observation_ids
+
+
+def test_tls_cert_expiry_fixture_completes_for_domain_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a4.tls.cert_expiry", "example.com", now)
+
+    result = runner.run("a4.tls.cert_expiry", "example.com", engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "fake"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "tls.certificate.expired" in observation_ids
+
+
+def test_port_scan_mock_transport_completes():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a5.port.scan_sim", "example.com", now)
+    result = runner.run("a5.port.scan_sim", "example.com", engagement=engagement, approval=approval, now=now)
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "mock"
+
+
+def test_web_crawl_mock_transport_completes_for_url():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    target = "https://example.com/"
+    engagement = build_default_engagement(target, now=now)
+    approval = _approved(engagement, "a6.web.crawl_sim", target, now)
+    result = runner.run("a6.web.crawl_sim", target, engagement=engagement, approval=approval, now=now)
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "mock"

@@ -48,6 +48,21 @@
       "rationale": "P0 acceptance criteria and P1 gate telemetry live here."
     },
     {
+      "pattern": "/masterblaster_control/p2_mock_transport.py",
+      "category": "mock-transport",
+      "rationale": "P2 mock transport and rate-limit simulator boundary lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p3_reporting.py",
+      "category": "reporting",
+      "rationale": "Findings projection and compliance draft generation live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p4_security.py",
+      "category": "security",
+      "rationale": "Persistent signing keys and RBAC boundary live here."
+    },
+    {
       "pattern": "/masterblaster_control/mcp_tab.py",
       "category": "ui-runner-bridge",
       "rationale": "Qt job request path into the runner simulator lives here."
@@ -76,6 +91,11 @@
       "pattern": "/scripts/generate_sbom.py",
       "category": "supply-chain",
       "rationale": "Deterministic SPDX SBOM generation and check mode live here."
+    },
+    {
+      "pattern": "/scripts/generate_sbom_stub.py",
+      "category": "supply-chain",
+      "rationale": "CycloneDX SBOM stub generation for CI artifacts lives here."
     },
     {
       "pattern": "/scripts/validate_governance.py",
@@ -133,6 +153,11 @@
       "rationale": "Threat model impact documentation lives here."
     },
     {
+      "pattern": "/docs/REVIEW_POLICY.md",
+      "category": "security-docs",
+      "rationale": "Security-sensitive review policy documentation lives here."
+    },
+    {
       "pattern": "/docs/P0_ACCEPTANCE_CHECKLIST.md",
       "category": "acceptance-docs",
       "rationale": "Rendered acceptance evidence lives here."
@@ -161,6 +186,11 @@
       "pattern": "/docs/adr/*.md",
       "category": "adr",
       "rationale": "Security-sensitive architecture decision records live here."
+    },
+    {
+      "pattern": "/docs/design/*.md",
+      "category": "design-docs",
+      "rationale": "P7 plugin and AI workflow design specifications live here."
     },
     {
       "pattern": "/tests/test_runner_simulator.py",

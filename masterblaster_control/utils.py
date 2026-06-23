@@ -40,3 +40,13 @@ def write_watermarked_report(content, watermark=True, prefix="report"):
             report_file.write("# Simulator evidence draft only. No compliance or certification claim.\n\n")
         report_file.write(content)
     return str(path)
+
+
+def write_export_file(content: str, prefix: str, extension: str) -> str:
+    if not SAFE_REPORT_PREFIX_RE.fullmatch(prefix):
+        raise ValueError("export prefix must be a safe lowercase slug")
+    ensure_dirs()
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = Path("reports") / f"{prefix}_{ts}.{extension}"
+    path.write_text(content, encoding="utf-8")
+    return str(path)

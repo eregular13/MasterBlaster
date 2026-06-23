@@ -1,0 +1,10 @@
+services:
+  masterblaster:
+    build: .
+    image: masterblaster-control:local
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+    environment:
+      - QT_QPA_PLATFORM=offscreen
+    command: ["python", "scripts/demo_p0_overdrive.py"]

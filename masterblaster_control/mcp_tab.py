@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from .p0_approvals import request_approval
-from .runner_simulator import build_default_engagement
+
 
 
 class MCPTab(QWidget):
@@ -98,7 +98,7 @@ class MCPTab(QWidget):
         if hasattr(self.main, "update_mcp_status"):
             self.main.update_mcp_status(adapter_id, "Running", 30)
 
-        engagement = build_default_engagement(target)
+        engagement = self.main.get_active_engagement(target)
         approval_request = request_approval(engagement, adapter_id, target)
         approval = self.main.request_human_approval(approval_request)
         self.output.append(f"Approval state: {approval.state} ({approval.decision_reason or 'pending'})")

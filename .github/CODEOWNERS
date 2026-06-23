@@ -1,4 +1,5 @@
 # Security-sensitive P0 control-plane files require repository-owner review.
+# See docs/REVIEW_POLICY.md and docs/governance/security-review-policy.md.
 
 /masterblaster_control/runner_simulator.py @eregular13
 /masterblaster_control/p0_policy.py @eregular13
@@ -9,12 +10,16 @@
 /masterblaster_control/p0_resources.py @eregular13
 /masterblaster_control/p0_mcp_readonly.py @eregular13
 /masterblaster_control/p0_acceptance.py @eregular13
+/masterblaster_control/p2_mock_transport.py @eregular13
+/masterblaster_control/p3_reporting.py @eregular13
+/masterblaster_control/p4_security.py @eregular13
 /masterblaster_control/mcp_tab.py @eregular13
 /masterblaster_control/masterblaster_bridge.py @eregular13
 /masterblaster_control/utils.py @eregular13
 /scripts/validate_p0_registry.py @eregular13
 /scripts/demo_p0_overdrive.py @eregular13
 /scripts/generate_sbom.py @eregular13
+/scripts/generate_sbom_stub.py @eregular13
 /scripts/validate_governance.py @eregular13
 /scripts/scan_prohibited_capabilities.py @eregular13
 /pyproject.toml @eregular13
@@ -26,12 +31,14 @@
 /policy/security-sensitive-paths.json @eregular13
 /docs/SECURITY_IMPACT.md @eregular13
 /docs/THREAT_MODEL_IMPACT.md @eregular13
+/docs/REVIEW_POLICY.md @eregular13
 /docs/P0_ACCEPTANCE_CHECKLIST.md @eregular13
 /docs/architecture/*.md @eregular13
 /docs/governance/*.md @eregular13
 /docs/supply-chain/*.md @eregular13
 /docs/audits/*.md @eregular13
 /docs/adr/*.md @eregular13
+/docs/design/*.md @eregular13
 /tests/test_runner_simulator.py @eregular13
 /tests/test_p0_*.py @eregular13
 /tests/test_sbom_generation.py @eregular13

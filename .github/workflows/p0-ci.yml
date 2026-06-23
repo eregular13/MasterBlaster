@@ -1,0 +1,72 @@
+name: P0 CI
+
+on:
+  push:
+    branches: [main, codex/**, feature/**]
+  pull_request:
+    branches: [main, codex/**, feature/**]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate reviewed P0 registry
+        run: python scripts/validate_p0_registry.py
+
+      - name: Run non-network test suite
+        run: python -m pytest
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate CycloneDX SBOM stub
+        run: python scripts/generate_sbom_stub.py --output dist/sbom.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p0-sbom-stub
+          path: dist/sbom.cdx.json
+          if-no-files-found: error
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t masterblaster-control:ci .

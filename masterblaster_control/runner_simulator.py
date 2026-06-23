@@ -21,11 +21,13 @@ from .p0_models import (
 )
 from .p0_policy import (
     REASON_ALLOW,
+    REASON_RATE_LIMIT,
     canonical_json,
     evaluate_policy,
     sign_job_envelope,
     validate_job_envelope,
 )
+from .p2_mock_transport import MockTransport, MockTransportDenied
 
 _MANIFESTS: dict[str, AdapterManifest] = {
     "a0.fixture.inventory": AdapterManifest(
@@ -53,6 +55,71 @@ _MANIFESTS: dict[str, AdapterManifest] = {
         fixture_only=True,
         reviewed=True,
         description="Exercises the TLS parser behind a fake transport for tests and demos.",
+    ),
+    "a2.dns.posture": AdapterManifest(
+        adapter_id="a2.dns.posture",
+        name="A2 DNS Posture",
+        version="0.1.0",
+        tier="A2",
+        execution_mode="offline_fixture",
+        parameters=("target",),
+        allowed_target_types=("domain",),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Parses bundled DNS posture fixture data. No resolver transport is available.",
+    ),
+    "a3.http.headers": AdapterManifest(
+        adapter_id="a3.http.headers",
+        name="A3 HTTP Headers",
+        version="0.1.0",
+        tier="A3",
+        execution_mode="offline_fixture",
+        parameters=("target",),
+        allowed_target_types=("url",),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Parses bundled HTTP security header fixture data. No HTTP transport is available.",
+    ),
+    "a4.tls.cert_expiry": AdapterManifest(
+        adapter_id="a4.tls.cert_expiry",
+        name="A4 TLS Certificate Expiry",
+        version="0.1.0",
+        tier="A4",
+        execution_mode="fake_transport",
+        parameters=("target",),
+        allowed_target_types=("domain", "url"),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Exercises certificate-expiry parsing behind a fake transport only.",
+    ),
+    "a5.port.scan_sim": AdapterManifest(
+        adapter_id="a5.port.scan_sim",
+        name="A5 Port Scan Simulator",
+        version="0.1.0",
+        tier="A5",
+        execution_mode="mock_transport",
+        parameters=("target",),
+        allowed_target_types=("host", "domain", "ip"),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="P2 mock transport port scan fixture. No packets are sent.",
+    ),
+    "a6.web.crawl_sim": AdapterManifest(
+        adapter_id="a6.web.crawl_sim",
+        name="A6 Web Crawl Simulator",
+        version="0.1.0",
+        tier="A6",
+        execution_mode="mock_transport",
+        parameters=("target",),
+        allowed_target_types=("url",),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="P2 mock transport crawl fixture. No HTTP requests are made.",
     ),
 }
 
@@ -84,8 +151,9 @@ def build_default_engagement(target: str, now: datetime | None = None) -> Engage
 
 
 class RunnerSimulator:
-    def __init__(self, signing_key: bytes | None = None):
+    def __init__(self, signing_key: bytes | None = None, mock_transport: MockTransport | None = None):
         self._signing_key = signing_key or secrets.token_bytes(32)
+        self._mock_transport = mock_transport or MockTransport()
 
     def run(
         self,
@@ -146,7 +214,17 @@ class RunnerSimulator:
                 job=signed_job,
             )
 
-        evidence = self._simulate_adapter(manifest, signed_job)
+        try:
+            evidence = self._simulate_adapter(manifest, signed_job, now=current_time)
+        except MockTransportDenied as exc:
+            return RunnerResult(
+                status="denied",
+                decision=PolicyDecision(False, REASON_RATE_LIMIT, f"Mock transport denied: {exc.reason_code}"),
+                engagement=engagement,
+                approval=approval,
+                job=signed_job,
+            )
+
         return RunnerResult(
             status="completed",
             decision=runner_decision,
@@ -156,20 +234,66 @@ class RunnerSimulator:
             evidence=(evidence,),
         )
 
-    def _simulate_adapter(self, manifest: AdapterManifest, job: JobEnvelope) -> EvidenceRecord:
-        if manifest.adapter_id == "a1.tls.assessment":
+    def _simulate_adapter(
+        self,
+        manifest: AdapterManifest,
+        job: JobEnvelope,
+        now: datetime | None = None,
+    ) -> EvidenceRecord:
+        if manifest.execution_mode in {"fake_transport", "mock_transport"}:
+            payload = self._mock_transport.fetch(manifest.adapter_id, job.target, now=now)
+            transport_label = "fake" if manifest.execution_mode == "fake_transport" else "mock"
             content: dict[str, Any] = {
                 "adapter_id": manifest.adapter_id,
                 "target": job.target,
-                "transport": "fake",
-                "observations": [
+                "transport": transport_label,
+                "observations": payload["observations"],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = f"parser.{manifest.adapter_id}.mock.v1"
+            if manifest.adapter_id == "a1.tls.assessment":
+                content["observations"] = [
                     {"id": "tls.protocols", "value": ["TLSv1.2", "TLSv1.3"]},
                     {"id": "tls.certificate_chain", "value": "fixture-valid-chain"},
                     {"id": "tls.weak_protocols", "value": []},
+                ]
+                parser_id = "parser.tls.fixture.v1"
+            elif manifest.adapter_id == "a4.tls.cert_expiry":
+                content["observations"] = [
+                    {"id": "tls.certificate.not_after", "value": "2027-01-01T00:00:00Z"},
+                    {"id": "tls.certificate.days_remaining", "value": 365},
+                    {"id": "tls.certificate.expired", "value": False},
+                    {"id": "tls.certificate.issuer", "value": "Fixture CA"},
+                ]
+                parser_id = "parser.tls.cert_expiry.fixture.v1"
+        elif manifest.adapter_id == "a2.dns.posture":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "none",
+                "observations": [
+                    {"id": "dns.spf", "value": "v=spf1 include:_spf.fixture.example -all"},
+                    {"id": "dns.dmarc", "value": "p=reject; rua=mailto:dmarc@fixture.example"},
+                    {"id": "dns.dnssec", "value": "enabled-in-fixture"},
+                    {"id": "dns.caa", "value": ["0 issue \"letsencrypt.org\""]},
                 ],
                 "policy_reason": REASON_ALLOW,
             }
-            parser_id = "parser.tls.fixture.v1"
+            parser_id = "parser.dns.fixture.v1"
+        elif manifest.adapter_id == "a3.http.headers":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "none",
+                "observations": [
+                    {"id": "http.strict_transport_security", "value": "max-age=31536000; includeSubDomains"},
+                    {"id": "http.content_security_policy", "value": "default-src 'self'"},
+                    {"id": "http.x_frame_options", "value": "DENY"},
+                    {"id": "http.x_content_type_options", "value": "nosniff"},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = "parser.http.headers.fixture.v1"
         else:
             content = {
                 "adapter_id": manifest.adapter_id,
