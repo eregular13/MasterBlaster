@@ -23,6 +23,9 @@ REASON_TARGET_TYPE = "DENY_TARGET_TYPE"
 REASON_UNKNOWN_ADAPTER = "DENY_UNKNOWN_ADAPTER"
 REASON_UNKNOWN_ARGUMENT = "DENY_UNKNOWN_ARGUMENT"
 REASON_UNREVIEWED_ADAPTER = "DENY_UNREVIEWED_ADAPTER"
+
+# Governed Kali tool wrapper metadata — permitted on any reviewed adapter strike
+WARLORD_TOOL_ARGUMENTS = frozenset({"tool", "binary", "preset", "command"})
 REASON_APPROVAL_REQUIRED = "DENY_APPROVAL_REQUIRED"
 REASON_APPROVAL_NOT_APPROVED = "DENY_APPROVAL_NOT_APPROVED"
 REASON_APPROVAL_EXPIRED = "DENY_APPROVAL_EXPIRED"
@@ -117,7 +120,9 @@ def evaluate_policy(
         return PolicyDecision(False, REASON_EXPIRED_ENGAGEMENT, "Engagement authorization has expired.")
 
     arguments = arguments or {}
-    unknown_args = sorted(set(arguments) - set(manifest.parameters))
+    unknown_args = sorted(
+        set(arguments) - set(manifest.parameters) - WARLORD_TOOL_ARGUMENTS
+    )
     if unknown_args:
         return PolicyDecision(
             False,
