@@ -1,0 +1,71 @@
+{
+  "adapter_id": "a2.dns.posture",
+  "transport": "none",
+  "allowed_observation_ids": [
+    "dns.mx.present",
+    "dns.spf.present",
+    "dns.dmarc.policy",
+    "dns.dnssec.signed"
+  ],
+  "scenarios": {
+    "healthy": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "dns.mx.present",
+          "value": true
+        },
+        {
+          "id": "dns.spf.present",
+          "value": true
+        },
+        {
+          "id": "dns.dmarc.policy",
+          "value": "reject"
+        },
+        {
+          "id": "dns.dnssec.signed",
+          "value": true
+        }
+      ]
+    },
+    "weak": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "dns.mx.present",
+          "value": true
+        },
+        {
+          "id": "dns.spf.present",
+          "value": false
+        },
+        {
+          "id": "dns.dmarc.policy",
+          "value": "none"
+        },
+        {
+          "id": "dns.dnssec.signed",
+          "value": false
+        }
+      ]
+    },
+    "malformed": {
+      "schema_version": "p0.fixture.v1",
+      "observations": "not-a-list"
+    },
+    "unsupported_schema": {
+      "schema_version": "p0.fixture.v999",
+      "observations": []
+    },
+    "unexpected_observation": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "dns.live_lookup_attempted",
+          "value": true
+        }
+      ]
+    }
+  }
+}

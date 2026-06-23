@@ -1,0 +1,71 @@
+{
+  "adapter_id": "a2.http.headers",
+  "transport": "none",
+  "allowed_observation_ids": [
+    "http.headers.present",
+    "http.header.strict_transport_security",
+    "http.header.content_security_policy",
+    "http.header.x_content_type_options"
+  ],
+  "scenarios": {
+    "healthy": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "http.headers.present",
+          "value": true
+        },
+        {
+          "id": "http.header.strict_transport_security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "id": "http.header.content_security_policy",
+          "value": "default-src 'self'"
+        },
+        {
+          "id": "http.header.x_content_type_options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    "weak": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "http.headers.present",
+          "value": true
+        },
+        {
+          "id": "http.header.strict_transport_security",
+          "value": ""
+        },
+        {
+          "id": "http.header.content_security_policy",
+          "value": ""
+        },
+        {
+          "id": "http.header.x_content_type_options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    "malformed": {
+      "schema_version": "p0.fixture.v1",
+      "observations": "not-a-list"
+    },
+    "unsupported_schema": {
+      "schema_version": "p0.fixture.v999",
+      "observations": []
+    },
+    "unexpected_observation": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "http.unreviewed.dynamic_probe",
+          "value": true
+        }
+      ]
+    }
+  }
+}

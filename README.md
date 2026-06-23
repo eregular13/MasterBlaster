@@ -1,86 +1,154 @@
-# MasterBlaster-Control • Kali MCP Nexus v1.1 (Usable Orchestration Control Plane)
+# MasterBlaster P0 Authorized Assessment Simulator
 
-Professional desktop GUI Control Plane that orchestrates the 20+ MCPs from the MasterBlaster engine.
+MasterBlaster is being narrowed into an authorized security assessment control plane. The current implementation is a Phase P0 simulator: it validates reviewed adapter manifests, deterministic target scope, signed expiring job envelopes, and hashed fixture evidence without running live tools or touching targets.
 
-## Features (v1.1 - Usable Product)
-- Full PySide6 (Qt6) dark Kali-themed GUI
-- 22 MCP tabs + expandable slots with parameter forms
-- **Live Dashboard Cards**: All MCPs shown, real-time Idle/Running/Success/Failed/Stopped, color coding, progress bars. Clickable to jump to tab.
-- **Functional Run All MCPs**: Sequential execution (completion-driven, not timers). Live card updates + aggregated results.
-- **Global Stop All**: Cleanly terminates running processes, aborts batches/workflows, updates UI/cards.
-- **Functional Workflow Builder**: Add/reorder/remove MCPs in right panel. Execute Chain runs in order with live status, logs, intel.
-- Per-MCP **Stop** button + robust QProcess handling.
-- **Demo-safe execution**: If Kali tools missing (Windows dev etc.), realistic simulated outputs per MCP type with parsed intel (ports, vulns, creds, etc.).
-- Universal log + Target Intel panel with automatic aggregation.
-- Evidence collector + full Export (menu) with watermarked Markdown reports.
-- “Verify & Install All Kali Tools” button (real PATH check + demo notes).
-- Ethics & legal banner + watermark toggle in Settings.
-- Polish: status bar, global target sync across tabs, button state management.
+## Current P0 Capabilities
 
-## Tech Stack
-- Primary: Python 3.12 + PySide6 (Qt6) native desktop GUI (dark Kali theme)
-- Execution: subprocess + QProcess + embedded terminal panes
-- Interoperability: git submodule for MasterBlaster + Python import or CLI calls
-- Database: SQLite + optional export to Dradis
-- Packaging: PyInstaller one-click .deb + AppImage ready
+- Reviewed adapter manifest registry with deny-by-default lookup.
+- Deterministic target parsing for host, domain, IP, CIDR, and HTTP(S) URL inputs.
+- Scope and rules-of-engagement policy decisions with stable reason codes.
+- Human approval artifacts validated by the runner before job issuance.
+- Signed, expiring, tenant-bound, client-bound, engagement-bound, approval-bound, target-bound, and adapter-bound job envelopes.
+- Runner simulator that independently validates policy and job signatures before emitting fixture evidence.
+- Five reviewed fixture adapters: A0 inventory, A1 TLS fake transport, A2 HTTP headers, A2 DNS posture, and A2 certificate-expiry posture.
+- Evidence records with parser provenance, adapter version, fixture scenario, approval linkage, and SHA-256 canonical envelope hashes.
+- SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts, with scoped tenant reads.
+- Recursive storage redaction and explicit retention purge controls for local simulator artifacts.
+- Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
+- Read-only MCP-shaped facade for registered resources, planning briefs, and simulator report drafts.
+- Deterministic SPDX 2.3 SBOM generation and stale-output checks.
+- GitHub Actions P0 verification and dependency-review workflow definitions with least-privilege permissions.
+- CODEOWNERS-backed security-sensitive path inventory, PR template, and governance drift validator.
+- AST-based prohibited-capability scanner for Python execution/network primitives.
+- Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
+- Desktop UI for persisted tenant/client/engagement selection, simulator runs, workflow ordering, scoped audit/evidence browsing, and report drafts.
 
-## Kali Tools
-All tools are from standard Kali Linux 2026 repositories.
+## Non-Goals in P0
 
-Use the "Verify & Install All Kali Tools" button or run:
-
-```bash
-./scripts/verify_kali_tools.sh
-```
+P0 does not install Kali tools, execute host commands, launch submodule scripts, scan networks, exploit services, brute-force credentials, collect secrets, or claim compliance. Unknown adapters, targets, arguments, and expired authorizations are denied.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/eregular13/MasterBlaster.git
-cd MasterBlaster
-git submodule update --init --recursive
-pip install pyside6 pyyaml
+py -3.12 -m venv .venv
+. .venv/bin/activate
+pip install -e ".[dev]"
 python main.py
 ```
 
-**Note**: Runs on any OS. On non-Kali hosts, missing tools auto-use realistic demo/simulated output so you can test the full orchestration, dashboard, Run All, Workflows, Stop, and exports immediately.
+Run the non-network test suite:
 
-See the full push sequence in the generation.
-
-## 22 MCPs (20 + 2 expandable slots)
-1. Recon-Nmap MCP
-2. Recon-Maltego OSINT MCP
-3. Vuln-OpenVAS MCP
-4. Vuln-Nikto Web MCP
-5. Web-Burp Suite Proxy MCP
-6. Web-SQLMap MCP
-7. Web-Gobuster Hybrid MCP
-8. Exploit-Metasploit Framework MCP
-9. Exploit-SET Social-Engineering MCP
-10. Wireless-Aircrack-ng Suite MCP
-11. Wireless-Bettercap MITM MCP
-12. Wireless-Yersinia Layer2 MCP
-13. Password-John + Hashcat Hybrid MCP
-14. Password-Hydra Brute MCP
-15. Password-Responsive LLMNR MCP
-16. Post-Empire MCP
-17. Forensics-Autopsy + Volatility MCP
-18. Forensics-Foremost Carver MCP
-19. Sniff-Wireshark + tcpdump MCP
-20. Reporting-Dradis + Export MCP
-21. Future MCP 21 (Expandable)
-22. Future MCP 22 (Expandable)
-
-## Ethics
-See ethics.md
-
-For authorized use only.
-
-## Bonus Image Prompts (v1.1 Real Control Plane)
-1. Professional dark Kali Linux desktop GUI MasterBlaster-Control v1.1, top bar with logo and global target, left sidebar 22 MCP buttons with live colored status dots (gray/green/yellow/red), central dashboard with full grid of 22 live cards showing Running/Success/Failed/Stopped with progress bars, right workflow chain list with up/down/remove and Execute button, modern cyber UI, 4K
-2. Detailed PySide6 MCP tab for SQLMap in dark theme: parameter form, big Execute and Stop buttons, live scrolling terminal output, progress bar, parsed results table showing found vulnerabilities, status badges
-3. Interactive workflow builder canvas in MasterBlaster-Control: draggable MCP nodes (Nmap, SQLMap, Metasploit) connected in sequence, global target, live execution status glow on current step, dark Kali aesthetic with universal log below
-
+```bash
+python -m pytest
+python -m compileall masterblaster_control scripts
+python scripts/validate_p0_registry.py
+python scripts/demo_p0_overdrive.py
+python scripts/generate_sbom.py --check
+python scripts/validate_governance.py
+python scripts/scan_prohibited_capabilities.py
 ```
 
-**2. .gitignore** (write it)
+Regenerate the SBOM after dependency metadata changes:
+
+```bash
+python scripts/generate_sbom.py
+```
+
+The legacy `./scripts/verify_kali_tools.sh` wrapper is retained for compatibility, but it now delegates to the Python validator. It does not install packages.
+
+Run the console demo:
+
+```bash
+python scripts/demo_p0_overdrive.py
+```
+
+The demo validates reviewed manifests and non-executing resources, runs one approved fixture simulator job and one denied approval path, records both outcomes in in-memory storage, previews redaction/retention controls, renders read-only MCP facade drafts, and prints acceptance status.
+
+## Adapter Manifests
+
+The reviewed P0 manifests live in `masterblaster_control/runner_simulator.py`:
+
+- `a0.fixture.inventory`: offline fixture parser, no network transport.
+- `a1.tls.assessment`: TLS parser behind a fake transport, no network transport.
+- `a2.http.headers`: HTTP response-header posture parser over checked-in JSON fixtures only.
+- `a2.dns.posture`: DNS posture parser over checked-in JSON fixtures only.
+- `a2.certificate.expiry`: certificate-expiry posture parser over checked-in JSON fixtures only.
+
+All UI actions route through these manifests and the runner simulator. There is no generic command execution API.
+
+## Local Storage
+
+The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator state. This database records runner results after policy validation:
+
+- tenant, client, and engagement records;
+- human approval artifacts;
+- signed job envelopes for allowed simulator runs;
+- hashed fixture evidence;
+- audit events for both denied and completed runs;
+- a migration table and report draft table skeleton.
+
+The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
+
+Ordinary audit/evidence reads require tenant scope; global reads are named as admin reads. JSON values are recursively redacted before persistence when they use sensitive key names or inline secret assignment patterns. Local retention controls can purge old approvals, jobs, evidence records, and audit events in dependency-safe order.
+
+## Human Approval Gate
+
+Simulator jobs require a selected persisted engagement and an approval artifact before the runner issues a signed envelope. The Qt UI asks for local human confirmation, but the runner still validates that the approval is approved, unexpired, single-use for the runner instance, and bound to the same tenant, client, engagement, adapter, and target.
+
+Denied, expired, missing, or mismatched approvals fail closed.
+
+## Non-Executing Resources
+
+The P0 resource registry lives in `masterblaster_control/p0_resources.py`. It includes deterministic planning, reporting, and governance templates:
+
+- `p0://planning/engagement-template`
+- `p0://planning/rules-of-engagement-template`
+- `p0://planning/workflow-template`
+- `p0://reporting/report-draft-outline`
+- `p0://governance/acceptance-checklist`
+
+These resources are inert content. They can support UI and future MCP read operations, but they cannot execute jobs, approve scope, or override runner policy.
+
+`masterblaster_control/p0_mcp_readonly.py` wraps these resources in a dependency-free, MCP-shaped facade. It exposes descriptor reads plus two draft renderers:
+
+- `planning_brief`: a non-executing engagement planning brief.
+- `report_draft`: a simulator-only report draft based on local audit/evidence summaries.
+
+The facade has no job execution, approval mutation, adapter invocation, network transport, shell, or policy override surface.
+
+## Acceptance Dashboard
+
+The acceptance registry lives in `masterblaster_control/p0_acceptance.py` and renders `docs/P0_ACCEPTANCE_CHECKLIST.md`. It reports:
+
+- overall reference completion;
+- P1 gate completion;
+- evidence files for each criterion;
+- explicit blockers before any live-capability discussion.
+
+The Qt Guardrails panel and report draft exports include the dashboard.
+
+## CI, SBOM, and Review Governance
+
+The repository includes:
+
+- `.github/workflows/p0-verification.yml` for deterministic P0 verification on Linux and Windows with Python 3.12, including project installation and Qt import smoke coverage;
+- `.github/workflows/dependency-review.yml` for local SBOM drift enforcement and fail-closed GitHub dependency review on pull requests;
+- `sbom/masterblaster-p0.spdx.json`, generated by `scripts/generate_sbom.py`;
+- `.github/CODEOWNERS`, `.github/pull_request_template.md`, and `policy/security-sensitive-paths.json`;
+- `scripts/validate_governance.py` and `scripts/scan_prohibited_capabilities.py`.
+
+Maintainers must still enable branch protection, required checks, dependency graph features, and CODEOWNERS-required review in GitHub settings before making remote enforcement claims. Until Dependency graph support is enabled, GitHub dependency review is expected to fail and the P1 gate remains externally blocked.
+
+## Security Notes
+
+- The UI is not a trusted authorization boundary; the runner re-validates each signed job envelope.
+- Job signing keys are generated in memory for the local simulator and are not logged.
+- Evidence content is deterministic fixture data and is hashed before report inclusion.
+- Persistent audit records are local simulator artifacts and should not contain secrets.
+- Storage redaction is defensive; secrets still must not be entered into simulator payloads.
+- Reports are drafts and must not be represented as compliance certification.
+- See `docs/P0_ACCEPTANCE_CHECKLIST.md` before discussing any P1 or live capability.
+
+## Roadmap
+
+Phase P0 should continue by adding finding/mapping projections, formal data-flow documentation, transitive lock/SBOM hardening, richer headless Qt tests, and verified remote repository enforcement. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass and repository settings enforce the documented review gates.

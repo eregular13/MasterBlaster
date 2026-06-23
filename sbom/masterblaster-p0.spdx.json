@@ -1,0 +1,117 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "1970-01-01T00:00:00Z",
+    "creators": [
+      "Tool: MasterBlaster-P0-SBOM-Generator-1.0"
+    ]
+  },
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": [
+    "SPDXRef-Package-masterblaster.control"
+  ],
+  "documentNamespace": "https://github.com/eregular13/MasterBlaster/spdx/masterblaster-control-0.2.0",
+  "name": "MasterBlaster P0 Dependency SBOM",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-masterblaster.control",
+      "downloadLocation": "https://github.com/eregular13/MasterBlaster",
+      "filesAnalyzed": false,
+      "name": "masterblaster-control",
+      "supplier": "NOASSERTION",
+      "versionInfo": "0.2.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyside6",
+      "annotations": [
+        {
+          "annotationDate": "1970-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: MasterBlaster-P0-SBOM-Generator-1.0",
+          "comment": "source=pyproject.toml:project.dependencies; requirements.txt:1; scope=requirements; runtime"
+        }
+      ],
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pyside6@6.7.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "name": "PySide6",
+      "supplier": "NOASSERTION",
+      "versionInfo": "6.7.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pytest",
+      "annotations": [
+        {
+          "annotationDate": "1970-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: MasterBlaster-P0-SBOM-Generator-1.0",
+          "comment": "source=pyproject.toml:project.optional-dependencies.dev; requirements.txt:2; scope=optional:dev; requirements"
+        }
+      ],
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pytest@8.2.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "name": "pytest",
+      "supplier": "NOASSERTION",
+      "versionInfo": "8.2.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-setuptools",
+      "annotations": [
+        {
+          "annotationDate": "1970-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: MasterBlaster-P0-SBOM-Generator-1.0",
+          "comment": "source=pyproject.toml:build-system.requires; scope=build"
+        }
+      ],
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/setuptools@70.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "name": "setuptools",
+      "supplier": "NOASSERTION",
+      "versionInfo": "70.0.0"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-Package-masterblaster.control",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-pyside6",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-masterblaster.control"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-pytest",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-masterblaster.control"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-setuptools",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-masterblaster.control"
+    }
+  ],
+  "spdxVersion": "SPDX-2.3"
+}

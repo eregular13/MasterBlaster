@@ -1,0 +1,28 @@
+{
+  "adapter_id": "a0.fixture.inventory",
+  "transport": "none",
+  "allowed_observation_ids": [
+    "asset.kind",
+    "service.https",
+    "risk.confirmed"
+  ],
+  "scenarios": {
+    "healthy": {
+      "schema_version": "p0.fixture.v1",
+      "observations": [
+        {
+          "id": "asset.kind",
+          "value": "fixture-host"
+        },
+        {
+          "id": "service.https",
+          "value": "present-in-fixture"
+        },
+        {
+          "id": "risk.confirmed",
+          "value": false
+        }
+      ]
+    }
+  }
+}
