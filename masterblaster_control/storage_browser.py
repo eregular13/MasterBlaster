@@ -167,9 +167,10 @@ class StorageBrowser(QWidget):
         self.evidence_search.textChanged.connect(self._refresh_evidence_table)
         evidence_filters.addWidget(self.evidence_search, 1)
         evidence_layout.addLayout(evidence_filters)
-        evidence_layout.addWidget(self.evidence_table := self._make_table(
+        self.evidence_table = self._make_table(
             ["Evidence ID", "Job", "Adapter", "Target", "Parser", "SHA-256"]
-        ))
+        )
+        evidence_layout.addWidget(self.evidence_table)
         evidence_layout.addWidget(QLabel("Evidence Detail"))
         self.evidence_detail = QPlainTextEdit()
         self.evidence_detail.setReadOnly(True)

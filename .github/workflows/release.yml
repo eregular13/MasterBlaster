@@ -31,6 +31,7 @@ jobs:
 
       - name: Full verification suite
         run: |
+          python scripts/generate_sbom.py
           python -m pytest
           python scripts/validate_p0_registry.py
           python scripts/validate_plugins.py

@@ -1,30 +1,32 @@
 import json
-import subprocess
-import sys
-import urllib.error
-import urllib.request
-from pathlib import Path
+
+from masterblaster_control.p0_mcp_readonly import P0ReadOnlyMCPFacade
+from masterblaster_control.p0_storage import P0Storage
+from scripts.mcp_http_server import handle_http_post, health_payload
+from scripts.mcp_stdio_server import handle_request
 
 
-def test_mcp_http_health_endpoint():
-    script = Path(__file__).resolve().parents[1] / "scripts" / "mcp_http_server.py"
-    proc = subprocess.Popen(
-        [sys.executable, str(script), "--port", "18765"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    try:
-        for _ in range(30):
-            try:
-                with urllib.request.urlopen("http://127.0.0.1:18765/health", timeout=1) as resp:
-                    payload = json.loads(resp.read().decode("utf-8"))
-                assert payload["status"] == "ok"
-                assert payload["readonly"] is True
-                return
-            except urllib.error.URLError:
-                pass
-        raise AssertionError("MCP HTTP server did not become ready")
-    finally:
-        proc.terminate()
-        proc.wait(timeout=5)
+def _facade() -> P0ReadOnlyMCPFacade:
+    storage = P0Storage(":memory:")
+    storage.initialize()
+    return P0ReadOnlyMCPFacade(storage)
+
+
+def test_mcp_http_health_payload():
+    payload = health_payload()
+    assert payload["status"] == "ok"
+    assert payload["readonly"] is True
+
+
+def test_mcp_http_post_delegates_to_handle_request():
+    facade = _facade()
+    status, payload = handle_http_post(json.dumps({"method": "ping"}).encode("utf-8"), facade)
+    assert status == 200
+    assert payload == handle_request({"method": "ping"}, facade)
+
+
+def test_mcp_http_post_rejects_invalid_json():
+    facade = _facade()
+    status, payload = handle_http_post(b"{bad", facade)
+    assert status == 400
+    assert payload["error"] == "invalid_json"

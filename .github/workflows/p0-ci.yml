@@ -2,9 +2,9 @@ name: P0 CI
 
 on:
   push:
-    branches: [main, codex/**, feature/**]
+    branches: [main, codex/**, feature/**, grok/**]
   pull_request:
-    branches: [main, codex/**, feature/**]
+    branches: [main, codex/**, feature/**, grok/**]
 
 permissions:
   contents: read
@@ -28,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Refresh SPDX SBOM
+        run: python scripts/generate_sbom.py
 
       - name: Validate reviewed P0 registry
         run: python scripts/validate_p0_registry.py

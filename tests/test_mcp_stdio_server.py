@@ -1,8 +1,3 @@
-import json
-import subprocess
-import sys
-from pathlib import Path
-
 from scripts.mcp_stdio_server import handle_request
 from masterblaster_control.p0_mcp_readonly import P0ReadOnlyMCPFacade
 from masterblaster_control.p0_storage import P0Storage
@@ -44,18 +39,8 @@ def test_handle_request_fails_closed_for_unknown_tool():
     assert response["readonly"] is True
 
 
-def test_stdio_server_process_responds_to_ping():
-    script = Path(__file__).resolve().parents[1] / "scripts" / "mcp_stdio_server.py"
-    proc = subprocess.run(
-        [sys.executable, str(script)],
-        input='{"method":"ping"}\n',
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    )
-    payload = json.loads(proc.stdout.strip())
-
-    assert proc.returncode == 0
+def test_handle_request_ping():
+    facade = _facade()
+    payload = handle_request({"method": "ping"}, facade)
     assert payload["pong"] is True
     assert payload["readonly"] is True

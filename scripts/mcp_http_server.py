@@ -25,7 +25,7 @@ class MCPHTTPHandler(BaseHTTPRequestHandler):
         if self.path != "/health":
             self._json_response(404, {"error": "not_found"})
             return
-        self._json_response(200, {"status": "ok", "readonly": True, "execution": False})
+        self._json_response(200, health_payload())
 
     def do_POST(self) -> None:
         if self.path != "/mcp":
@@ -33,12 +33,8 @@ class MCPHTTPHandler(BaseHTTPRequestHandler):
             return
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
-        try:
-            request = json.loads(body.decode("utf-8"))
-        except json.JSONDecodeError:
-            self._json_response(400, {"error": "invalid_json"})
-            return
-        self._json_response(200, handle_request(request, self.facade))
+        status, payload = handle_http_post(body, self.facade)
+        self._json_response(status, payload)
 
     def log_message(self, format: str, *args: object) -> None:
         return
@@ -50,6 +46,18 @@ class MCPHTTPHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+
+def health_payload() -> dict[str, object]:
+    return {"status": "ok", "readonly": True, "execution": False}
+
+
+def handle_http_post(body: bytes, facade: P0ReadOnlyMCPFacade) -> tuple[int, dict]:
+    try:
+        request = json.loads(body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return 400, {"error": "invalid_json"}
+    return 200, handle_request(request, facade)
 
 
 def main(argv: list[str] | None = None) -> int:

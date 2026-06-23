@@ -10,7 +10,7 @@
   "documentDescribes": [
     "SPDXRef-Package-masterblaster.control"
   ],
-  "documentNamespace": "https://github.com/eregular13/MasterBlaster/spdx/masterblaster-control-0.2.0",
+  "documentNamespace": "https://github.com/eregular13/MasterBlaster/spdx/masterblaster-control-1.0.0",
   "name": "MasterBlaster P0 Dependency SBOM",
   "packages": [
     {
@@ -19,7 +19,7 @@
       "filesAnalyzed": false,
       "name": "masterblaster-control",
       "supplier": "NOASSERTION",
-      "versionInfo": "0.2.0"
+      "versionInfo": "1.0.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pyside6",

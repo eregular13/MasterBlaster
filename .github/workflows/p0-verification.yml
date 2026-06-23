@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "codex/**"
+      - "grok/**"
 
 permissions:
   contents: read
@@ -37,6 +38,7 @@ jobs:
 
       - name: Run deterministic P0 proof battery
         run: |
+          python scripts/generate_sbom.py
           python -m pytest
           python -m compileall masterblaster_control scripts
           python scripts/validate_p0_registry.py

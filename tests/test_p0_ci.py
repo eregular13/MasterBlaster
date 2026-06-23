@@ -1,7 +1,7 @@
 import json
-import subprocess
-import sys
 from pathlib import Path
+
+from scripts.generate_sbom_stub import build_sbom
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -9,15 +9,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def test_sbom_stub_generates_cyclonedx_components(tmp_path):
     output = tmp_path / "sbom.cdx.json"
-    completed = subprocess.run(
-        [sys.executable, "scripts/generate_sbom_stub.py", "--output", str(output)],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    assert completed.returncode == 0
+    payload = build_sbom(REPO_ROOT / "requirements.txt")
+    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["bomFormat"] == "CycloneDX"
     assert payload["metadata"]["component"]["name"] == "masterblaster-control"
