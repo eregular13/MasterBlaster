@@ -2,7 +2,7 @@
 
 MasterBlaster is an authorized security assessment control plane that progresses through phased delivery from a deny-by-default simulator (P0) to a community-ready platform (P7).
 
-**Active integration branch:** `codex/masterblaster-work` (merged with `feature/p0-continuation`)
+**Grok development branch:** `grok/masterblaster` — all Grok-built work lives here. The `codex/masterblaster-work` branch is left for Codex and is not modified by this line of development.
 
 ## Capabilities
 
