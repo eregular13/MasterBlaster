@@ -14,6 +14,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
 - SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
 - Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
+- Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
 - Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
 
 ## Non-Goals in P0
@@ -42,6 +43,14 @@ python scripts/validate_p0_registry.py
 ```
 
 The legacy `./scripts/verify_kali_tools.sh` wrapper is retained for compatibility, but it now delegates to the Python validator. It does not install packages.
+
+Run the console demo:
+
+```bash
+python scripts/demo_p0_overdrive.py
+```
+
+The demo validates reviewed manifests and non-executing resources, runs one allowed fixture simulator job and one denied fake-transport request, records both outcomes in in-memory storage, and prints acceptance blockers.
 
 ## Adapter Manifests
 
@@ -75,6 +84,17 @@ The P0 resource registry lives in `masterblaster_control/p0_resources.py`. It in
 - `p0://governance/acceptance-checklist`
 
 These resources are inert content. They can support UI and future MCP read operations, but they cannot execute jobs, approve scope, or override runner policy.
+
+## Acceptance Dashboard
+
+The acceptance registry lives in `masterblaster_control/p0_acceptance.py` and renders `docs/P0_ACCEPTANCE_CHECKLIST.md`. It reports:
+
+- overall reference completion;
+- P1 gate completion;
+- evidence files for each criterion;
+- explicit blockers before any live-capability discussion.
+
+The Qt Guardrails panel and report draft exports include the dashboard.
 
 ## Security Notes
 

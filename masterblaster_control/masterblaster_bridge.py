@@ -4,6 +4,7 @@ import json
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
+from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
 from .runner_simulator import MANIFESTS
 
@@ -40,6 +41,10 @@ class MasterBlasterBridge(QWidget):
         self.checklist_btn.clicked.connect(self.show_acceptance_checklist)
         buttons.addWidget(self.checklist_btn)
 
+        self.dashboard_btn = QPushButton("Show Acceptance Dashboard")
+        self.dashboard_btn.clicked.connect(self.show_acceptance_dashboard)
+        buttons.addWidget(self.dashboard_btn)
+
         lay.addLayout(buttons)
 
         self.refresh_scripts()
@@ -58,6 +63,10 @@ class MasterBlasterBridge(QWidget):
     def show_acceptance_checklist(self):
         self.output.clear()
         self.output.append(read_resource("p0://governance/acceptance-checklist").body)
+
+    def show_acceptance_dashboard(self):
+        self.output.clear()
+        self.output.append(acceptance_dashboard_markdown())
 
     def _launch_selected(self):
         self.output.append("Denied: P0 does not allow direct script execution.")

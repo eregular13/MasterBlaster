@@ -8,6 +8,7 @@
 - Evidence provenance and report drafts.
 - Local SQLite audit history.
 - Non-executing planning, reporting, and governance resources.
+- Acceptance dashboard criteria and evidence links.
 
 ## Trust Boundaries
 
@@ -17,6 +18,8 @@ The SQLite store is not trusted for authorization. It records runner outcomes af
 
 P0 resources are not trusted for authorization. They are deterministic templates and checklist content only.
 
+Acceptance criteria are not trusted for authorization. They document readiness and blockers only.
+
 ## Threats Reduced
 
 - Arbitrary command execution through user-controlled flags or script paths.
@@ -25,6 +28,7 @@ P0 resources are not trusted for authorization. They are deterministic templates
 - Unreviewed adapter execution, because manifests are enumerated in a closed registry.
 - Lost in-memory audit context, because completed and denied simulator outcomes are persisted locally.
 - Resource confusion, because unknown resource URIs fail closed and registered resources self-declare as non-executing content.
+- Readiness inflation, because acceptance percentages are computed from explicit criteria with evidence links and blockers.
 
 ## Threats Remaining
 

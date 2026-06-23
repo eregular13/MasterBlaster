@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Literal
 
+from .p0_acceptance import acceptance_dashboard_markdown
+
 ResourceCategory = Literal["planning", "reporting", "governance"]
 
 
@@ -148,23 +150,11 @@ This report is a simulator draft only. It is not a compliance attestation, certi
         version="0.1.0",
         content_type="text/markdown",
         summary="Acceptance controls required before any A2/A3 live capability discussion.",
-        body="""# P0 Acceptance Checklist
-
-This resource is non-executing. It is a governance checklist only.
-
-## Required Before P1
-
-- Reviewed adapter manifests only.
-- Deterministic scope validation.
-- Signed, expiring job envelopes.
-- Runner-side validation independent of UI.
-- Fixture-only evidence with hashes and provenance.
-- Persistent audit events for completed and denied simulator outcomes.
-- Non-executing planning and report resources.
-- Negative tests before positive simulator tests.
-- Documentation for security impact and threat-model impact.
-- No live network transport or host command execution.
-""",
+        body=(
+            "This resource is non-executing. It is governance telemetry only and cannot approve, "
+            "create, or run jobs.\n\n"
+            + acceptance_dashboard_markdown()
+        ),
     ),
 )
 

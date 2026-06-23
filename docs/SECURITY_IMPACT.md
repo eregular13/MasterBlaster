@@ -14,10 +14,11 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Added deterministic fixture evidence with SHA-256 content hashes and parser provenance.
 - Added a passive SQLite storage skeleton for validated runner results, evidence, and audit events.
 - Added a closed non-executing P0 resource registry for planning, reporting, and governance templates.
+- Added a machine-readable acceptance dashboard with evidence links and explicit P1 blockers.
 
 ## Privileged Behavior
 
-P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources are inert content and cannot create or approve executable work.
+P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources and acceptance criteria are inert governance content and cannot create or approve executable work.
 
 ## Residual Risk
 
