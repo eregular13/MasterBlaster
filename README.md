@@ -16,6 +16,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
 - Recursive storage redaction and explicit retention purge controls for local simulator artifacts.
 - Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
+- Read-only MCP-shaped facade for registered resources, planning briefs, and simulator report drafts.
 - Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
 - Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
 
@@ -52,7 +53,7 @@ Run the console demo:
 python scripts/demo_p0_overdrive.py
 ```
 
-The demo validates reviewed manifests and non-executing resources, runs one approved fixture simulator job and one denied approval path, records both outcomes in in-memory storage, previews redaction/retention controls, and prints acceptance blockers.
+The demo validates reviewed manifests and non-executing resources, runs one approved fixture simulator job and one denied approval path, records both outcomes in in-memory storage, previews redaction/retention controls, renders read-only MCP facade drafts, and prints acceptance blockers.
 
 ## Adapter Manifests
 
@@ -96,6 +97,13 @@ The P0 resource registry lives in `masterblaster_control/p0_resources.py`. It in
 
 These resources are inert content. They can support UI and future MCP read operations, but they cannot execute jobs, approve scope, or override runner policy.
 
+`masterblaster_control/p0_mcp_readonly.py` wraps these resources in a dependency-free, MCP-shaped facade. It exposes descriptor reads plus two draft renderers:
+
+- `planning_brief`: a non-executing engagement planning brief.
+- `report_draft`: a simulator-only report draft based on local audit/evidence summaries.
+
+The facade has no job execution, approval mutation, adapter invocation, network transport, shell, or policy override surface.
+
 ## Acceptance Dashboard
 
 The acceptance registry lives in `masterblaster_control/p0_acceptance.py` and renders `docs/P0_ACCEPTANCE_CHECKLIST.md`. It reports:
@@ -119,4 +127,4 @@ The Qt Guardrails panel and report draft exports include the dashboard.
 
 ## Roadmap
 
-Phase P0 should continue by adding human approval state, tenant/client/engagement management UI, an MCP wrapper for non-executing resources and draft-only tools, additional fixture adapters, CI dependency review, and an SBOM workflow. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.
+Phase P0 should continue by adding tenant/client/engagement management UI, additional fixture adapters, CI dependency review, an SBOM workflow, and security-sensitive review policy. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.

@@ -17,11 +17,12 @@ This change converts the application from a broad MCP/tool launcher into a Phase
 - Added a machine-readable acceptance dashboard with evidence links and explicit P1 blockers.
 - Added runner-enforced human approval artifacts before simulator job envelope issuance.
 - Added defensive storage redaction and deterministic retention purge controls.
+- Added a dependency-free read-only MCP facade for resources, planning briefs, and simulator report drafts.
 
 ## Privileged Behavior
 
-P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy, approval, and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources and acceptance criteria are inert governance content and cannot create or approve executable work.
+P0 has no privileged live execution behavior. The only "run" action executes in-process fixture simulation after policy, approval, and signature validation. Persistence records outcomes after validation and does not authorize jobs. Resources, acceptance criteria, and read-only MCP facade outputs are inert governance content and cannot create or approve executable work.
 
 ## Residual Risk
 
-The desktop UI still creates a local simulator engagement from the entered target for demonstration. Durable authorization workflows, tenant-aware application queries beyond the local skeleton, approval workflows, and an MCP wrapper around the non-executing resources remain future P0 work.
+The desktop UI still creates a local simulator engagement from the entered target for demonstration. Durable authorization workflows, tenant-aware application queries beyond the local skeleton, approval workflows, CI dependency review, and security-sensitive review policy remain future P0 work. A future network or stdio MCP transport must delegate to the read-only facade without adding job execution.

@@ -145,7 +145,7 @@ _CRITERIA: tuple[AcceptanceCriterion, ...] = (
         percent=100,
         required_for_p1=True,
         evidence=("masterblaster_control/p0_resources.py", "tests/test_p0_resources.py"),
-        next_action="Wrap resources in an MCP read-only service.",
+        next_action="Keep resource records transport-agnostic as the MCP facade evolves.",
     ),
     AcceptanceCriterion(
         criterion_id="testing.negative_first",
@@ -216,11 +216,15 @@ _CRITERIA: tuple[AcceptanceCriterion, ...] = (
         criterion_id="mcp.read_only_wrapper",
         title="MCP read-only wrapper for resources and draft tools",
         category="operations",
-        status="not_started",
-        percent=0,
+        status="complete",
+        percent=100,
         required_for_p1=True,
-        evidence=("docs/architecture/p0-resources.md",),
-        next_action="Create service skeleton that exposes resources but cannot execute jobs.",
+        evidence=(
+            "masterblaster_control/p0_mcp_readonly.py",
+            "tests/test_p0_mcp_readonly.py",
+            "docs/architecture/p0-readonly-mcp.md",
+        ),
+        next_action="Wrap the facade with an actual MCP transport after CI and review policy land.",
     ),
     AcceptanceCriterion(
         criterion_id="adapters.additional_fixtures",

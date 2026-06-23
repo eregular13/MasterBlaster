@@ -2,7 +2,7 @@
 
 ## Purpose
 
-P0 resources provide planning, reporting, and governance templates that can be exposed by a future MCP server without granting execution authority.
+P0 resources provide planning, reporting, and governance templates that can be exposed through the read-only MCP facade without granting execution authority.
 
 ## Boundary
 
@@ -20,6 +20,6 @@ The closed registry lives in `masterblaster_control/p0_resources.py` and include
 
 Unknown resource URIs fail closed with `UnknownResourceError`.
 
-## Future MCP Wrapper
+## Read-Only MCP Facade
 
-A future MCP service may expose these records as resources. That service must preserve the same boundary: resource reads are allowed, job execution is not. Any planning or reporting tool must produce drafts only and must never issue runnable jobs until approval and runner policy are complete.
+`masterblaster_control/p0_mcp_readonly.py` exposes these records as resource descriptors and supports draft-only renderers for planning briefs and report drafts. The facade preserves the same boundary: resource reads are allowed, job execution is not. Any future transport wrapper must delegate to this facade and must not add runnable tools until approval and runner policy are complete.

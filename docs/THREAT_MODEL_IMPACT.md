@@ -11,6 +11,7 @@
 - Non-executing planning, reporting, and governance resources.
 - Acceptance dashboard criteria and evidence links.
 - Storage redaction and retention policy.
+- Read-only MCP facade descriptors and draft renderers.
 
 ## Trust Boundaries
 
@@ -26,6 +27,8 @@ Acceptance criteria are not trusted for authorization. They document readiness a
 
 Redaction is not trusted as permission to collect secrets. It is a fail-soft persistence guard for accidental sensitive keys or inline secret-like strings.
 
+The read-only MCP facade is not trusted for authorization. It can render deterministic planning/report drafts and read registered resources, but it cannot issue jobs, approve scope, invoke adapters, contact targets, or override runner policy.
+
 ## Threats Reduced
 
 - Arbitrary command execution through user-controlled flags or script paths.
@@ -37,11 +40,12 @@ Redaction is not trusted as permission to collect secrets. It is a fail-soft per
 - Readiness inflation, because acceptance percentages are computed from explicit criteria with evidence links and blockers.
 - Approval spoofing, because missing, denied, expired, or mismatched approvals fail closed before job issuance.
 - Local artifact over-retention, because old approvals, jobs, evidence, and audit events can be purged in dependency-safe order.
+- MCP surface creep, because the facade only exposes resource reads and draft renderers and unknown tool names fail closed.
 
 ## Threats Remaining
 
 - Persistent tenant/client/engagement storage is only a local skeleton.
 - The local simulator signing key is process-local and intended only for demo validation.
 - Report exports are Markdown drafts and still require downstream review before use.
-- Future MCP exposure of resources still needs wrapper-level tests proving read-only behavior.
+- A future MCP network or stdio transport still needs integration tests proving it delegates only to the read-only facade.
 - CI does not yet generate an SBOM or enforce code-owner review for security-sensitive files.

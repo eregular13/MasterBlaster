@@ -10,6 +10,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from masterblaster_control.p0_acceptance import acceptance_summary
 from masterblaster_control.p0_approvals import approve_request, deny_request, request_approval
+from masterblaster_control.p0_mcp_readonly import P0ReadOnlyMCPFacade, demo_session_id
 from masterblaster_control.p0_retention import RetentionPolicy, redact_for_storage
 from masterblaster_control.p0_resources import list_resources
 from masterblaster_control.p0_storage import P0Storage
@@ -77,6 +78,13 @@ def main() -> int:
         f"approvals={retention.approvals_deleted}, jobs={retention.jobs_deleted}, "
         f"evidence={retention.evidence_deleted}, audit={retention.audit_events_deleted}"
     )
+    facade = P0ReadOnlyMCPFacade(storage)
+    planning_brief = facade.render_tool("planning_brief")
+    report_draft = facade.render_tool("report_draft")
+    print(f"Read-only MCP facade session: {demo_session_id()}")
+    print(f"Read-only tools: {[tool['name'] for tool in facade.list_tool_descriptors()]}")
+    print(f"Planning brief bytes: {len(planning_brief.body)}")
+    print(f"Report draft bytes: {len(report_draft.body)}")
 
     summary = acceptance_summary()
     print(

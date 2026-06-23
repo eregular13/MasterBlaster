@@ -1,0 +1,31 @@
+# P0 Read-Only MCP Facade
+
+## Purpose
+
+`masterblaster_control/p0_mcp_readonly.py` provides a dependency-free MCP-shaped facade for resources and draft-only tools. It is the safe core that a future MCP transport can wrap.
+
+## Exposed Capabilities
+
+- list registered P0 resource descriptors;
+- read a registered P0 resource;
+- list read-only tool descriptors;
+- render a planning brief;
+- render a report draft from local storage summaries.
+
+## Non-Capabilities
+
+The facade does not expose:
+
+- job execution;
+- adapter invocation;
+- network transport;
+- shell commands;
+- approval mutation;
+- policy overrides;
+- target contact.
+
+Unknown tool names fail closed with `UnknownReadOnlyToolError`. Draft tools are rendered with `render_tool(...)`; the facade does not expose a generic command or adapter execution API.
+
+## Safety Boundary
+
+The facade is not a trusted authorization boundary. It reads deterministic resources and local storage summaries only. Any future MCP server must delegate to this facade and must not add runnable tools until P0 acceptance gates are complete.

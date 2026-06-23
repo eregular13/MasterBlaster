@@ -2,11 +2,11 @@
 
 This checklist gates discussion of any A2/A3 live capability. The source of truth is `masterblaster_control/p0_acceptance.py`; this document mirrors the current criteria and evidence links.
 
-- Overall reference completion: 78%
-- P1 gate completion: 84%
-- Complete: 16
+- Overall reference completion: 82%
+- P1 gate completion: 89%
+- Complete: 17
 - Partial: 3
-- Not started: 3
+- Not started: 2
 
 | Criterion | Status | % | P1 Gate | Evidence | Next Action |
 | --- | --- | ---: | --- | --- | --- |
@@ -19,14 +19,14 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 | A1 TLS assessment behind fake transport | complete | 100% | yes | `masterblaster_control/runner_simulator.py`, `tests/test_runner_simulator.py` | Add alternate TLS fixture scenarios. |
 | Deterministic evidence hashes and parser provenance | complete | 100% | yes | `masterblaster_control/p0_models.py`, `tests/test_runner_simulator.py` | Add finding/mapping projection from evidence. |
 | Persistent local audit for completed and denied outcomes | complete | 100% | yes | `masterblaster_control/p0_storage.py`, `masterblaster_control/p0_approvals.py`, `masterblaster_control/p0_retention.py`, `tests/test_p0_storage.py` | Add operator-configurable retention presets in the Qt settings panel. |
-| Non-executing planning, reporting, governance resources | complete | 100% | yes | `masterblaster_control/p0_resources.py`, `tests/test_p0_resources.py` | Wrap resources in an MCP read-only service. |
+| Non-executing planning, reporting, governance resources | complete | 100% | yes | `masterblaster_control/p0_resources.py`, `tests/test_p0_resources.py` | Keep resource records transport-agnostic as the MCP facade evolves. |
 | Negative tests for deny-by-default policy behavior | complete | 100% | yes | `tests/test_p0_policy.py` | Add mutation-style tests for policy bypass attempts. |
 | Security impact and threat-model impact documentation | complete | 100% | yes | `docs/SECURITY_IMPACT.md`, `docs/THREAT_MODEL_IMPACT.md` | Add formal data-flow diagram doc. |
 | Report drafts disclaim compliance certification | complete | 100% | yes | `README.md`, `ethics.md`, `masterblaster_control/utils.py` | Add report template snapshot tests. |
 | Machine-readable acceptance dashboard | complete | 100% | yes | `masterblaster_control/p0_acceptance.py`, `tests/test_p0_acceptance.py` | Link dashboard rows to persisted evidence IDs. |
 | Human approval state machine for simulator requests | complete | 100% | yes | `masterblaster_control/p0_approvals.py`, `masterblaster_control/runner_simulator.py`, `masterblaster_control/mcp_tab.py`, `tests/test_p0_approvals.py` | Add multi-approver and approval-policy configuration for future production use. |
 | Tenant/client/engagement management UI over storage | partial | 35% | no | `masterblaster_control/p0_storage.py` | Add a read-only browser, then controlled create/edit forms. |
-| MCP read-only wrapper for resources and draft tools | not_started | 0% | yes | `docs/architecture/p0-resources.md` | Create service skeleton that exposes resources but cannot execute jobs. |
+| MCP read-only wrapper for resources and draft tools | complete | 100% | yes | `masterblaster_control/p0_mcp_readonly.py`, `tests/test_p0_mcp_readonly.py`, `docs/architecture/p0-readonly-mcp.md` | Wrap the facade with an actual MCP transport after CI and review policy land. |
 | Additional fixture adapters and parser scenarios | partial | 30% | no | `masterblaster_control/runner_simulator.py` | Add HTTP headers, DNS posture, and certificate-expiry fixture scenarios. |
 | CI workflow for tests, dependency review, and SBOM stubs | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add GitHub Actions workflow plus generated SBOM placeholder. |
 | Review policy for security-sensitive files | not_started | 0% | yes | `docs/P0_ACCEPTANCE_CHECKLIST.md` | Add CODEOWNERS-style policy documentation. |
@@ -40,4 +40,4 @@ This checklist gates discussion of any A2/A3 live capability. The source of trut
 - No arbitrary shell or user-supplied raw CLI arguments.
 - No claims of compliance certification from simulator output.
 - No adapter without a reviewed manifest and tests.
-- Read-only MCP wrapper, CI/SBOM, and review policy must be completed.
+- CI/SBOM and review policy must be completed.
