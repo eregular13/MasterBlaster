@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0] - 2026-06-22
+
+### Added
+- **PDF report renderer** — branded cover page, executive summary, findings tables, compliance appendix, signature blocks
+- **Live tool transport layer** — governed subprocess execution for nmap, nuclei, sqlmap, ffuf, subfinder behind MCPs
+- `live_tool_transport` feature flag + ROE `allow_network_transport` gate
+- Simulated fallback when tools are not installed on host
+- Invoice summary CSV export for finance integration
+- `scripts/run_paid_engagement_demo.py` — full simulated paid engagement workflow
+- Client project option: authorize live tool transport in ROE
+
+### Changed
+- Runner integrates live transport when tool arguments and governance gates pass
+- Prohibited-capability scanner allowlists `live_tool_transport.py` as sole execution boundary
+
+[1.2.0]: https://github.com/eregular13/MasterBlaster/releases/tag/v1.2.0
+
 ## [1.1.0] - 2026-06-22
 
 ### Added

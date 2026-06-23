@@ -125,7 +125,9 @@ class RunnerSimulator:
             )
 
         try:
-            evidence = self._simulate_adapter(manifest, signed_job, now=current_time)
+            evidence = self._simulate_adapter(
+                manifest, signed_job, engagement=engagement, now=current_time
+            )
         except MockTransportDenied as exc:
             return RunnerResult(
                 status="denied",
@@ -148,8 +150,20 @@ class RunnerSimulator:
         self,
         manifest: AdapterManifest,
         job: JobEnvelope,
+        *,
+        engagement: Engagement,
         now: datetime | None = None,
     ) -> EvidenceRecord:
+        arguments = dict(job.arguments)
+        if arguments.get("tool"):
+            from .live_tool_transport import LiveToolTransportError, can_execute_live, execute_live_tool
+
+            if can_execute_live(engagement, arguments):
+                try:
+                    return execute_live_tool(engagement, job, now=now)
+                except LiveToolTransportError:
+                    pass
+
         if manifest.execution_mode in {
             "fake_transport",
             "mock_transport",

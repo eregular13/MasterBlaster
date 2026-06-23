@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QHBoxLayout,
@@ -26,6 +27,8 @@ from .professional_reporting import (
 )
 from .findings_proposal import generate_consulting_proposal, proposal_markdown
 from .usage_logging import export_usage_csv, usage_summary_markdown
+from .invoice_export import export_invoice_summary_csv
+from .pdf_report_renderer import default_pdf_output_path, render_client_report_pdf
 from .utils import write_export_file, write_watermarked_report
 
 
@@ -71,6 +74,12 @@ class ClientProjectsTab(QWidget):
         self.contract_value.setPlaceholderText("25000")
         form.addRow("Contract value (USD):", self.contract_value)
 
+        self.live_tools_cb = QCheckBox("Authorize live tool transport in ROE (nmap, nuclei, sqlmap)")
+        self.live_tools_cb.setToolTip(
+            "Enables governed live subprocess execution when live_tool_transport feature flag is on."
+        )
+        form.addRow("Live tools:", self.live_tools_cb)
+
         root.addLayout(form)
 
         buttons = QHBoxLayout()
@@ -82,9 +91,13 @@ class ClientProjectsTab(QWidget):
         run_btn.clicked.connect(self._run_pipeline)
         buttons.addWidget(run_btn)
 
-        report_btn = QPushButton("Generate Client Report")
+        report_btn = QPushButton("Generate Report (Markdown)")
         report_btn.clicked.connect(self._generate_report)
         buttons.addWidget(report_btn)
+
+        pdf_btn = QPushButton("Generate Report (PDF)")
+        pdf_btn.clicked.connect(self._generate_pdf_report)
+        buttons.addWidget(pdf_btn)
 
         proposal_btn = QPushButton("Findings → Proposal")
         proposal_btn.clicked.connect(self._generate_proposal)
@@ -104,6 +117,10 @@ class ClientProjectsTab(QWidget):
         json_btn = QPushButton("Export Report JSON")
         json_btn.clicked.connect(self._export_report_json)
         export_row.addWidget(json_btn)
+
+        invoice_btn = QPushButton("Export Invoice Summary CSV")
+        invoice_btn.clicked.connect(self._export_invoice)
+        export_row.addWidget(invoice_btn)
         root.addLayout(export_row)
 
         self.output = QTextEdit()
@@ -145,6 +162,7 @@ class ClientProjectsTab(QWidget):
                 template_id=template_id,
                 scope_targets=scope,
                 contract_value_usd=contract,
+                allow_live_tools=self.live_tools_cb.isChecked(),
             )
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
@@ -204,6 +222,20 @@ class ClientProjectsTab(QWidget):
         self.main.log_message(f"Client report generated: {path}")
         QMessageBox.information(self, "Report", f"Client report saved:\n{path}")
 
+    def _generate_pdf_report(self):
+        client_name, project_name, template_id, engagement_id = self._report_context()
+        report = generate_professional_report(
+            self.main.storage,
+            engagement_id=engagement_id,
+            client_name=client_name,
+            project_name=project_name,
+            template_id=template_id,
+        )
+        pdf_path = render_client_report_pdf(report, default_pdf_output_path(report))
+        self.output.setPlainText(f"PDF report generated: {pdf_path}")
+        self.main.log_message(f"Client PDF report: {pdf_path}")
+        QMessageBox.information(self, "PDF Report", f"Client PDF saved:\n{pdf_path}")
+
     def _generate_proposal(self):
         client_name, project_name, template_id, engagement_id = self._report_context()
         report = generate_professional_report(
@@ -240,6 +272,11 @@ class ClientProjectsTab(QWidget):
         self.output.append("\n" + summary)
         self.main.log_message(f"Usage CSV exported: {path}")
         QMessageBox.information(self, "Export", f"Billing usage CSV:\n{path}")
+
+    def _export_invoice(self):
+        path = write_export_file(export_invoice_summary_csv(self.main.storage), "invoice_summary", "csv")
+        self.main.log_message(f"Invoice summary exported: {path}")
+        QMessageBox.information(self, "Export", f"Invoice summary CSV:\n{path}")
 
     def _export_report_json(self):
         client_name, project_name, template_id, engagement_id = self._report_context()

@@ -83,6 +83,7 @@ def create_project(
     tenant_id: str = "tenant-default",
     contract_value_usd: float | None = None,
     duration_days: int = 14,
+    allow_live_tools: bool = False,
 ) -> ClientProject:
     template = get_template(template_id)
     if template is None:
@@ -102,9 +103,12 @@ def create_project(
         client_id=client_id,
         authorized_targets=tuple(ScopeTarget(pattern=t) for t in scope_targets),
         rules=RulesOfEngagement(
-            allow_network_transport=False,
-            max_runtime_seconds=120,
-            notes=f"Template: {template_id} — {template.name}",
+            allow_network_transport=allow_live_tools,
+            max_runtime_seconds=120 if allow_live_tools else 30,
+            notes=(
+                f"Template: {template_id} — {template.name}"
+                + ("; live tool transport authorized per ROE" if allow_live_tools else "")
+            ),
         ),
         expires_at=now + timedelta(days=duration_days),
     )

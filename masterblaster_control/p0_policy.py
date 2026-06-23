@@ -143,6 +143,17 @@ def evaluate_policy(
             normalized_target,
         )
 
+    if arguments.get("tool") and not engagement.rules.allow_network_transport:
+        from .p9_feature_flags import is_feature_enabled
+
+        if is_feature_enabled("live_tool_transport"):
+            return PolicyDecision(
+                False,
+                REASON_NETWORK_TRANSPORT,
+                "Live tool execution requires allow_network_transport in rules of engagement.",
+                normalized_target,
+            )
+
     if manifest.network_access and not engagement.rules.allow_network_transport:
         return PolicyDecision(
             False,

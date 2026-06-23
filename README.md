@@ -44,6 +44,9 @@ MasterBlaster is a **monetizable control plane** for cybersecurity consulting fi
 | **Findings → Proposal** | One-click consulting proposal from assessment findings |
 | **Tool integrations** | Governed wrappers for nmap, nuclei, sqlmap, ffuf, burp, and related tooling |
 | **Billing hooks** | Usage event logging with CSV export for finance systems |
+| **PDF client reports** | Branded cover page, executive summary, signature blocks (ReportLab) |
+| **Live tool transport** | Governed nmap/nuclei/sqlmap execution when ROE + feature flag enabled |
+| **Invoice export** | Project contract value + usage units CSV for finance |
 
 ---
 

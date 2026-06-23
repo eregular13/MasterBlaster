@@ -21,6 +21,9 @@ class FirmConfig:
     default_hourly_rate_usd: float = 225.0
     proposal_valid_days: int = 30
     logo_path: str = ""
+    lead_assessor_name: str = "Lead Security Assessor"
+    lead_assessor_title: str = "Senior Consultant"
+    client_approver_label: str = "Client Authorized Representative"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -35,6 +38,9 @@ class FirmConfig:
             default_hourly_rate_usd=float(data.get("default_hourly_rate_usd", 225.0)),
             proposal_valid_days=int(data.get("proposal_valid_days", 30)),
             logo_path=str(data.get("logo_path", "")),
+            lead_assessor_name=str(data.get("lead_assessor_name", "Lead Security Assessor")),
+            lead_assessor_title=str(data.get("lead_assessor_title", "Senior Consultant")),
+            client_approver_label=str(data.get("client_approver_label", "Client Authorized Representative")),
         )
 
 

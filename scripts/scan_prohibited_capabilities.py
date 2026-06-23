@@ -10,6 +10,11 @@ from typing import Iterable
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCAN_ROOTS = ("masterblaster_control", "scripts", "tests")
 
+# Governed execution boundary — sole module permitted to invoke subprocess for live tools
+ALLOWLISTED_RELATIVE_PATHS = frozenset({
+    "masterblaster_control/live_tool_transport.py",
+})
+
 FORBIDDEN_IMPORTS = {
     "importlib",
     "pickle",
@@ -141,9 +146,18 @@ def iter_python_files(paths: Iterable[Path]) -> tuple[Path, ...]:
     return tuple(sorted(files))
 
 
+def _is_allowlisted(path: Path) -> bool:
+    try:
+        return path.relative_to(REPO_ROOT).as_posix() in ALLOWLISTED_RELATIVE_PATHS
+    except ValueError:
+        return False
+
+
 def scan_paths(paths: Iterable[Path]) -> tuple[Finding, ...]:
     findings: list[Finding] = []
     for path in iter_python_files(paths):
+        if _is_allowlisted(path):
+            continue
         findings.extend(scan_source(path.read_text(encoding="utf-8"), path))
     return tuple(findings)
 

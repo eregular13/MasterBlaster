@@ -8,6 +8,7 @@ from typing import Literal
 
 FeatureName = Literal[
     "a7_live_adapter",
+    "live_tool_transport",
     "oidc_auth",
     "hsm_signing",
     "mcp_http",
@@ -28,6 +29,11 @@ class FeatureFlag:
 
 _DEFAULTS: dict[FeatureName, tuple[bool, str]] = {
     "a7_live_adapter": (False, "A7 live transport adapter — blocked unless explicitly enabled."),
+    "live_tool_transport": (
+        False,
+        "Governed live subprocess transport for registered tools (nmap, nuclei, sqlmap). "
+        "Requires allow_network_transport in ROE.",
+    ),
     "oidc_auth": (False, "OIDC auth provider skeleton — no network calls in v1.0."),
     "hsm_signing": (False, "External HSM key store delegation — local file/env only."),
     "mcp_http": (True, "Read-only MCP HTTP wrapper for integrations."),

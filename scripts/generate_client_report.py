@@ -18,6 +18,7 @@ from masterblaster_control.professional_reporting import (
     generate_professional_report,
     professional_report_markdown,
 )
+from masterblaster_control.pdf_report_renderer import default_pdf_output_path, render_client_report_pdf
 from masterblaster_control.utils import write_export_file, write_watermarked_report
 
 
@@ -29,6 +30,7 @@ def main() -> int:
     parser.add_argument("--template", default=None, help="Engagement template ID")
     parser.add_argument("--proposal", action="store_true", help="Also generate consulting proposal")
     parser.add_argument("--csv", action="store_true", help="Export findings CSV for CRM")
+    parser.add_argument("--pdf", action="store_true", help="Generate branded PDF report")
     args = parser.parse_args()
 
     storage = P0Storage.default()
@@ -55,6 +57,10 @@ def main() -> int:
     if args.csv:
         csv_path = write_export_file(export_findings_csv(report), "findings_crm", "csv")
         print(f"CRM CSV: {csv_path}")
+
+    if args.pdf:
+        pdf_path = render_client_report_pdf(report, default_pdf_output_path(report))
+        print(f"PDF report: {pdf_path}")
 
     return 0
 
