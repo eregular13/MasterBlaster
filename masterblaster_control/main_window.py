@@ -41,6 +41,7 @@ from .p0_models import ApprovalRequest
 from .p0_resources import resource_summary_markdown
 from .p0_storage import P0Storage, StorageSnapshot
 from .runner_simulator import MANIFESTS, RunnerSimulator
+from .storage_browser import StorageBrowser
 from .utils import dark_kali_stylesheet, write_watermarked_report
 
 
@@ -202,6 +203,9 @@ class MainWindow(QMainWindow):
 
         self.mb_bridge = MasterBlasterBridge(self)
         self.main_tabs.addTab(self.mb_bridge, "Guardrails")
+
+        self.storage_browser = StorageBrowser(self.storage, self)
+        self.main_tabs.addTab(self.storage_browser, "Records")
 
         central_splitter.addWidget(self.main_tabs)
         central_splitter.setStretchFactor(1, 4)
@@ -525,6 +529,8 @@ class MainWindow(QMainWindow):
 
     def record_runner_result(self, result) -> StorageSnapshot:
         self.storage.record_runner_result(result)
+        if hasattr(self, "storage_browser"):
+            self.storage_browser.refresh()
         snapshot = self.storage.snapshot()
         self.log_message(
             "Storage snapshot: "

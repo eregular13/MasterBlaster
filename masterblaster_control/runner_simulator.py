@@ -53,6 +53,19 @@ MANIFESTS: dict[str, AdapterManifest] = {
         reviewed=True,
         description="Exercises the TLS parser behind a fake transport for tests and demos.",
     ),
+    "a2.dns.posture": AdapterManifest(
+        adapter_id="a2.dns.posture",
+        name="A2 DNS Posture",
+        version="0.1.0",
+        tier="A2",
+        execution_mode="offline_fixture",
+        parameters=("target",),
+        allowed_target_types=("domain",),
+        network_access=False,
+        fixture_only=True,
+        reviewed=True,
+        description="Parses bundled DNS posture fixture data. No resolver transport is available.",
+    ),
 }
 
 
@@ -167,6 +180,20 @@ class RunnerSimulator:
                 "policy_reason": REASON_ALLOW,
             }
             parser_id = "parser.tls.fixture.v1"
+        elif manifest.adapter_id == "a2.dns.posture":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "none",
+                "observations": [
+                    {"id": "dns.spf", "value": "v=spf1 include:_spf.fixture.example -all"},
+                    {"id": "dns.dmarc", "value": "p=reject; rua=mailto:dmarc@fixture.example"},
+                    {"id": "dns.dnssec", "value": "enabled-in-fixture"},
+                    {"id": "dns.caa", "value": ["0 issue \"letsencrypt.org\""]},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = "parser.dns.fixture.v1"
         else:
             content = {
                 "adapter_id": manifest.adapter_id,

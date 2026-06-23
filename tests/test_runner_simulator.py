@@ -65,3 +65,19 @@ def test_tls_fake_transport_completes_for_domain_target():
     assert result.status == "completed"
     assert result.decision.reason_code == REASON_ALLOW
     assert result.evidence[0].content["transport"] == "fake"
+
+
+def test_dns_posture_fixture_completes_for_domain_target():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a2.dns.posture", "example.com", now)
+
+    result = runner.run("a2.dns.posture", "example.com", engagement=engagement, approval=approval, now=now)
+
+    assert result.status == "completed"
+    assert result.decision.reason_code == REASON_ALLOW
+    assert result.evidence[0].content["transport"] == "none"
+    observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
+    assert "dns.spf" in observation_ids
+    assert "dns.dmarc" in observation_ids

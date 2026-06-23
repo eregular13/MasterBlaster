@@ -22,16 +22,17 @@ def test_acceptance_summary_is_stable_and_has_p1_blockers():
     summary = acceptance_summary()
 
     assert summary.total == len(list_acceptance_criteria())
-    assert summary.complete >= 17
+    assert summary.complete >= 19
     assert summary.partial >= 3
-    assert summary.not_started >= 2
-    assert 60 <= summary.overall_percent <= 90
-    assert 60 <= summary.p1_gate_percent <= 90
+    assert summary.not_started == 0
+    assert 85 <= summary.overall_percent <= 98
+    assert summary.p1_gate_percent == 100
+    assert summary.p1_blockers == ()
     assert "approvals.human_gate" not in summary.p1_blockers
     assert "storage.retention_redaction" not in summary.p1_blockers
     assert "mcp.read_only_wrapper" not in summary.p1_blockers
-    assert "ci.sbom_dependency_review" in summary.p1_blockers
-    assert "governance.review_policy" in summary.p1_blockers
+    assert "ci.sbom_dependency_review" not in summary.p1_blockers
+    assert "governance.review_policy" not in summary.p1_blockers
 
 
 def test_acceptance_lookup_fails_closed_for_unknown_ids():

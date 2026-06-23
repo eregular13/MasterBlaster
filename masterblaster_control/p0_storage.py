@@ -206,30 +206,124 @@ class P0Storage:
             audit_events_deleted=audit_events_deleted,
         )
 
-    def list_audit_events(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_tenants(self, limit: int = 50) -> list[dict[str, Any]]:
         self.initialize()
         cursor = self.connect().execute(
             """
-            SELECT event_id, tenant_id, engagement_id, action, reason_code, created_at, details_json
-            FROM audit_events
+            SELECT tenant_id, display_name, created_at
+            FROM tenants
             ORDER BY created_at DESC
             LIMIT ?
             """,
             (limit,),
         )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_clients(self, limit: int = 50, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT client_id, tenant_id, display_name, created_at
+            FROM clients
+        """
+        params: list[Any] = []
+        if tenant_id:
+            query += " WHERE tenant_id = ?"
+            params.append(tenant_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_engagements(self, limit: int = 50, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at, updated_at
+            FROM engagements
+        """
+        params: list[Any] = []
+        if tenant_id:
+            query += " WHERE tenant_id = ?"
+            params.append(tenant_id)
+        query += " ORDER BY updated_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        rows = [self._row_to_dict(row) for row in cursor.fetchall()]
+        for row in rows:
+            row["scope"] = row.pop("scope", [])
+            row["rules"] = row.pop("rules", {})
+        return rows
+
+    def list_jobs(self, limit: int = 50, adapter_id: str | None = None) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT job_id, tenant_id, client_id, engagement_id, adapter_id, target,
+                   issued_at, expires_at, status, decision_reason, decision_message, approval_id
+            FROM jobs
+        """
+        params: list[Any] = []
+        if adapter_id:
+            query += " WHERE adapter_id = ?"
+            params.append(adapter_id)
+        query += " ORDER BY issued_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
+
+    def list_audit_events(
+        self,
+        limit: int = 25,
+        action: str | None = None,
+        reason_code: str | None = None,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
+        self.initialize()
+        query = """
+            SELECT event_id, tenant_id, engagement_id, action, reason_code, created_at, details_json
+            FROM audit_events
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+        if action:
+            clauses.append("action = ?")
+            params.append(action)
+        if reason_code:
+            clauses.append("reason_code = ?")
+            params.append(reason_code)
+        if search:
+            clauses.append("details_json LIKE ?")
+            params.append(f"%{search}%")
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
         return [self._row_to_dict(row) for row in cursor.fetchall()]
 
-    def list_evidence(self, limit: int = 25) -> list[dict[str, Any]]:
+    def list_evidence(
+        self,
+        limit: int = 25,
+        adapter_id: str | None = None,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
         self.initialize()
-        cursor = self.connect().execute(
-            """
+        query = """
             SELECT evidence_id, job_id, adapter_id, target, parser_id, tool_version, sha256, content_json
             FROM evidence_records
-            ORDER BY rowid DESC
-            LIMIT ?
-            """,
-            (limit,),
-        )
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+        if adapter_id:
+            clauses.append("adapter_id = ?")
+            params.append(adapter_id)
+        if search:
+            clauses.append("(target LIKE ? OR sha256 LIKE ? OR evidence_id LIKE ?)")
+            pattern = f"%{search}%"
+            params.extend([pattern, pattern, pattern])
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY rowid DESC LIMIT ?"
+        params.append(limit)
+        cursor = self.connect().execute(query, params)
         return [self._row_to_dict(row) for row in cursor.fetchall()]
 
     def close(self) -> None:
@@ -355,7 +449,7 @@ class P0Storage:
 
     def _row_to_dict(self, row: sqlite3.Row) -> dict[str, Any]:
         result = dict(row)
-        for key in ("details_json", "content_json"):
+        for key in ("details_json", "content_json", "scope_json", "rules_json"):
             if key in result and result[key]:
                 result[key.removesuffix("_json")] = json.loads(result.pop(key))
         return result
