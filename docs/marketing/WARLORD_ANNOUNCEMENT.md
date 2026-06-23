@@ -11,7 +11,7 @@ Scattered CLI tooling is dead. Operators need a **warlord** — one GUI, one API
 ## Highlights
 
 - 22 MCP registry with Kali tool bindings
-- 8-MCP default assault chain (`demo_warlord_chain.py`)
+- 8-MCP fast strike (`demo_warlord_chain.py`) and 12-MCP full assault (`demo_warlord_full_chain.py`)
 - Qt command plane + MCP stdio/HTTP for AI agents
 - Scope-locked governance with human approval gates
 
@@ -20,7 +20,9 @@ Scattered CLI tooling is dead. Operators need a **warlord** — one GUI, one API
 ```bash
 git checkout grokier/masterblaster
 python scripts/demo_warlord_chain.py example.com
+python scripts/demo_warlord_full_chain.py example.com
 python main.py
+# Warlord menu → Crack Full Assault Chain | Export chain report
 ```
 
 ## Doctrine

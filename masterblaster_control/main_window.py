@@ -44,6 +44,8 @@ from .p0_retention import RetentionPolicy
 from .p0_storage import P0Storage, StorageSnapshot
 from .p3_reporting import compliance_draft_markdown, export_compliance_draft_json, generate_compliance_draft
 from .p7_workflow_generator import export_workflow_draft_json, generate_workflow_draft, workflow_draft_markdown
+from .warlord_orchestrator import execute_warlord_chain, warlord_chain_json, warlord_chain_markdown
+from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN
 from .p4_security import KeyStore, RBAC
 from .p8_auth import LocalAuthStore
 from .p8_workflow_assistant import assistant_markdown
@@ -177,6 +179,12 @@ class MainWindow(QMainWindow):
         file_menu.addAction("Export Workflow Draft (JSON)", self._export_workflow_json)
         file_menu.addAction("Export Workflow Draft (Markdown)", self._export_workflow_md)
         file_menu.addAction("Export Assistant Enrichment (Markdown)", self._export_assistant_md)
+        file_menu.addSeparator()
+        warlord_menu = self.menuBar().addMenu("&Warlord")
+        warlord_menu.addAction("Crack Assault Chain (8 MCPs)", self._crack_assault_chain)
+        warlord_menu.addAction("Crack Full Assault Chain (12 MCPs)", self._crack_full_assault_chain)
+        warlord_menu.addAction("Export Warlord Chain Report (Markdown)", self._export_warlord_chain_md)
+        warlord_menu.addAction("Export Warlord Chain Telemetry (JSON)", self._export_warlord_chain_json)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
         exit_action = QAction("Exit", self)
@@ -755,6 +763,43 @@ class MainWindow(QMainWindow):
         path = write_watermarked_report(assistant_markdown(draft), self.watermark_enabled, prefix="workflow_assistant")
         self.log_message(f"Assistant enrichment exported to {path}")
         QMessageBox.information(self, "Export", f"Assistant enrichment:\n{path}")
+
+    def _run_warlord_chain(self, chain: tuple[str, ...], label: str):
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        result = execute_warlord_chain(self.runner, engagement, target, chain=chain)
+        self.log_message(
+            f"Warlord {label}: {result.completed}/{len(result.steps)} completed, "
+            f"{result.denied} denied on {target}"
+        )
+        self._switch_to_masterblaster_bridge()
+        self.mb_bridge.output.clear()
+        self.mb_bridge.output.append(warlord_chain_markdown(result))
+        self._update_status(f"Whip cracked — {label}: {result.completed} strikes landed")
+
+    def _crack_assault_chain(self):
+        from .mcp_tool_arsenal import DEFAULT_ASSAULT_CHAIN
+
+        self._run_warlord_chain(DEFAULT_ASSAULT_CHAIN, "8-MCP assault chain")
+
+    def _crack_full_assault_chain(self):
+        self._run_warlord_chain(FULL_ASSAULT_CHAIN, "12-MCP full assault chain")
+
+    def _export_warlord_chain_md(self):
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        result = execute_warlord_chain(self.runner, engagement, target, chain=FULL_ASSAULT_CHAIN)
+        path = write_watermarked_report(warlord_chain_markdown(result), self.watermark_enabled, prefix="warlord_chain")
+        self.log_message(f"Warlord chain report exported to {path}")
+        QMessageBox.information(self, "Export", f"Warlord chain report:\n{path}")
+
+    def _export_warlord_chain_json(self):
+        target = self.global_target or "example.com"
+        engagement = self.get_active_engagement(target)
+        result = execute_warlord_chain(self.runner, engagement, target, chain=FULL_ASSAULT_CHAIN)
+        path = write_export_file(warlord_chain_json(result), "warlord_chain", "json")
+        self.log_message(f"Warlord chain JSON exported to {path}")
+        QMessageBox.information(self, "Export", f"Warlord chain telemetry:\n{path}")
 
     def _show_about(self):
         QMessageBox.information(

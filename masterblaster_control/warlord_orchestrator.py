@@ -159,3 +159,22 @@ def warlord_chain_markdown(result: WarlordChainResult) -> str:
             f"**{step.status}** | `{evidence}` |"
         )
     return "\n".join(lines)
+
+
+def warlord_chain_json(result: WarlordChainResult) -> str:
+    import json
+
+    return json.dumps(
+        {
+            "tagline": WARLORD_TAGLINE,
+            "target": result.target,
+            "engagement_id": result.engagement_id,
+            "chain": list(result.chain),
+            "completed": result.completed,
+            "denied": result.denied,
+            "success_rate": result.success_rate,
+            "steps": [step.to_dict() for step in result.steps],
+        },
+        indent=2,
+        sort_keys=True,
+    )

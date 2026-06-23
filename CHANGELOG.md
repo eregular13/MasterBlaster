@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.1.0-warlord] - 2026-06-22
+
+### Added
+- MasterBlaster WARLORD rebrand on `grokier/masterblaster` — 22 MCP command plane
+- Kali-grade tool arsenal (`mcp_tool_arsenal.py`) — 67 tool bindings across all MCP slots
+- Warlord assault-chain orchestrator with per-step approval and evidence capture
+- Default 8-MCP strike chain and 12-MCP full assault chain (recon → network → web → API → evidence)
+- Savage demo scripts: `demo_warlord_chain.py`, `demo_warlord_full_chain.py`
+- Warlord menu in GUI: crack chains, export Markdown reports and JSON telemetry
+- Warlord Command Post UI: arsenal catalog, Kali bindings, assault chain buttons
+
+### Changed
+- README, ethics.md, and marketing rewritten for warlord tone — capable and governed, not neutered
+- Smart governance retained: authorized engagements, scope lock, human approval, signed jobs, audit trail
+
+### Security
+- Orchestrated fixture/mock transport — no raw subprocess execution in core control plane
+- Policy gate and approval envelope on every MCP strike in the chain
+
+[2.1.0-warlord]: https://github.com/eregular13/MasterBlaster/releases/tag/v2.1.0-warlord
+
 ## [1.0.0] - 2026-06-23
 
 ### Added

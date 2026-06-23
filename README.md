@@ -85,7 +85,7 @@ graph TD
 
 ## 💀 Crack the Whip — Savage Demo
 
-**8-MCP assault chain** across subdomain recon → port scan → service ID → crawl → fuzz → inject → API strike → evidence compile:
+**8-MCP assault chain** (fast strike) or **12-MCP full assault** (total domination):
 
 ```bash
 git clone https://github.com/eregular13/MasterBlaster.git
@@ -93,8 +93,11 @@ cd MasterBlaster
 git checkout grokier/masterblaster
 pip install -r requirements.txt
 
-# Unleash the warlord chain
+# Fast strike — 8 MCPs
 python scripts/demo_warlord_chain.py example.com
+
+# Full assault — 12 MCPs, 30+ tools chained
+python scripts/demo_warlord_full_chain.py example.com
 ```
 
 **Sample chain:**
@@ -113,7 +116,8 @@ python scripts/demo_warlord_chain.py example.com
 ```bash
 # Launch the command plane
 python main.py
-# Guardrails → "Crack Assault Chain" | "Kali Tool Bindings" | "22 MCP Arsenal"
+# Warlord menu → Crack Full Assault Chain (12 MCPs) | Export chain report
+# Guardrails → "Crack Assault Chain (8)" | "Crack Full Chain (12)" | "Kali Tool Bindings"
 ```
 
 ---
@@ -169,7 +173,7 @@ curl http://127.0.0.1:8765/health
 ## ⚙️ Power Features
 
 - **Crack the Whip — All MCPs** — parallel queue across the full registry
-- **Assault chain orchestrator** — 8-step default kill chain, extensible
+- **Assault chain orchestrator** — 8-step fast strike or 12-step full assault chain
 - **Kali tool bindings** — 66+ tools mapped to MCP slots
 - **Records + evidence vault** — every strike hashed and stored
 - **Plugin marketplace** — extend the army without deserting core

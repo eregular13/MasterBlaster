@@ -8,7 +8,7 @@ from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
 from .mcp_catalog import catalog_markdown
-from .mcp_tool_arsenal import arsenal_markdown
+from .mcp_tool_arsenal import DEFAULT_ASSAULT_CHAIN, FULL_ASSAULT_CHAIN, arsenal_markdown
 from .warlord_orchestrator import execute_warlord_chain, warlord_chain_markdown
 from .p10_marketplace import marketplace_markdown
 from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
@@ -71,10 +71,15 @@ class MasterBlasterBridge(QWidget):
         self.arsenal_btn.clicked.connect(self.show_tool_arsenal)
         row2.addWidget(self.arsenal_btn)
 
-        self.whip_btn = QPushButton("Crack Assault Chain")
+        self.whip_btn = QPushButton("Crack Assault Chain (8)")
         self.whip_btn.setToolTip("Execute 8-MCP warlord chain with evidence capture.")
         self.whip_btn.clicked.connect(self.crack_assault_chain)
         row2.addWidget(self.whip_btn)
+
+        self.full_whip_btn = QPushButton("Crack Full Chain (12)")
+        self.full_whip_btn.setToolTip("Execute 12-MCP full assault chain — recon through evidence.")
+        self.full_whip_btn.clicked.connect(self.crack_full_assault_chain)
+        row2.addWidget(self.full_whip_btn)
 
         self.plugins_btn = QPushButton("Plugin Catalog")
         self.plugins_btn.clicked.connect(self.show_plugin_catalog)
@@ -155,6 +160,12 @@ class MasterBlasterBridge(QWidget):
         self.output.append(arsenal_markdown())
 
     def crack_assault_chain(self):
+        self._execute_chain(DEFAULT_ASSAULT_CHAIN)
+
+    def crack_full_assault_chain(self):
+        self._execute_chain(FULL_ASSAULT_CHAIN)
+
+    def _execute_chain(self, chain: tuple[str, ...]):
         self.output.clear()
         target = getattr(self.main, "global_target", "") or "example.com"
         runner = getattr(self.main, "runner", RunnerSimulator())
@@ -163,7 +174,7 @@ class MasterBlasterBridge(QWidget):
             getattr(self.main, "selected_engagement_id", "") or None,
             target,
         )
-        result = execute_warlord_chain(runner, engagement, target)
+        result = execute_warlord_chain(runner, engagement, target, chain=chain)
         self.output.append(warlord_chain_markdown(result))
 
     def show_plugin_catalog(self):

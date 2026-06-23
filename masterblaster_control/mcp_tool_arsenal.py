@@ -43,6 +43,22 @@ DEFAULT_ASSAULT_CHAIN: tuple[str, ...] = (
     "mcp.evidence.compiler",
 )
 
+# Full warlord strike — 12 MCPs, 30+ tool bindings across recon → network → web → API → evidence
+FULL_ASSAULT_CHAIN: tuple[str, ...] = (
+    "mcp.recon.osint",
+    "mcp.recon.subdomain",
+    "a2.dns.posture",
+    "a5.port.scan_sim",
+    "mcp.network.service",
+    "mcp.network.path",
+    "a6.web.crawl_sim",
+    "mcp.web.fuzzer",
+    "mcp.web.inject",
+    "mcp.web.auth",
+    "mcp.api.rest",
+    "mcp.evidence.compiler",
+)
+
 
 def tools_for_mcp(adapter_id: str) -> tuple[str, ...]:
     return MCP_TOOL_ARSENAL.get(adapter_id, ())
