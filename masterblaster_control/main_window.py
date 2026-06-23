@@ -43,6 +43,7 @@ from .engagement_picker import list_engagement_choices, resolve_engagement
 from .p0_retention import RetentionPolicy
 from .p0_storage import P0Storage, StorageSnapshot
 from .p3_reporting import compliance_draft_markdown, export_compliance_draft_json, generate_compliance_draft
+from .p7_workflow_generator import export_workflow_draft_json, generate_workflow_draft, workflow_draft_markdown
 from .p4_security import KeyStore, RBAC
 from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS, RunnerSimulator
@@ -100,7 +101,7 @@ class DashboardCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MasterBlaster Authorized Assessment Control Plane")
+        self.setWindowTitle("MasterBlaster v1.0 — Authorized Assessment Control Plane")
         self.resize(1250, 820)
 
         self.settings = QSettings("MasterBlaster", "P0Simulator")
@@ -170,6 +171,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction("Export Report Draft", self._export_all_reports)
         file_menu.addAction("Export Compliance Draft (JSON)", self._export_compliance_json)
         file_menu.addAction("Export Compliance Draft (Markdown)", self._export_compliance_md)
+        file_menu.addAction("Export Workflow Draft (JSON)", self._export_workflow_json)
+        file_menu.addAction("Export Workflow Draft (Markdown)", self._export_workflow_md)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
         exit_action = QAction("Exit", self)
@@ -716,6 +719,20 @@ class MainWindow(QMainWindow):
         path = write_watermarked_report(compliance_draft_markdown(draft), self.watermark_enabled, prefix="compliance_draft")
         self.log_message(f"Compliance draft Markdown exported to {path}")
         QMessageBox.information(self, "Export", f"Compliance draft Markdown:\n{path}")
+
+    def _export_workflow_json(self):
+        engagement = self.get_active_engagement(self.global_target or "example.com")
+        draft = generate_workflow_draft(engagement)
+        path = write_export_file(export_workflow_draft_json(draft), "workflow_draft", "json")
+        self.log_message(f"Workflow draft JSON exported to {path}")
+        QMessageBox.information(self, "Export", f"Workflow draft JSON:\n{path}")
+
+    def _export_workflow_md(self):
+        engagement = self.get_active_engagement(self.global_target or "example.com")
+        draft = generate_workflow_draft(engagement)
+        path = write_watermarked_report(workflow_draft_markdown(draft), self.watermark_enabled, prefix="workflow_draft")
+        self.log_message(f"Workflow draft Markdown exported to {path}")
+        QMessageBox.information(self, "Export", f"Workflow draft Markdown:\n{path}")
 
     def _show_about(self):
         QMessageBox.information(

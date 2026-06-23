@@ -1,8 +1,8 @@
-# MasterBlaster Authorized Security Assessment Control Plane
+# MasterBlaster v1.0 — Authorized Security Assessment Control Plane
 
-MasterBlaster is an authorized security assessment control plane that progresses through phased delivery from a deny-by-default simulator (P0) to a community-ready platform (P7).
+MasterBlaster v1.0 is an authorized security assessment control plane: deny-by-default simulator, human approval gates, signed jobs, fixture evidence, compliance drafts, plugin catalog, and workflow planning — without live target execution.
 
-**Grok development branch:** `grok/masterblaster` — all Grok-built work lives here. The `codex/masterblaster-work` branch is left for Codex and is not modified by this line of development.
+**Grok development branch:** `grok/masterblaster` — all Grok-built work lives here. The `codex/masterblaster-work` branch is left for Codex.
 
 ## Capabilities
 
@@ -15,7 +15,8 @@ MasterBlaster is an authorized security assessment control plane that progresses
 | **P4** | Persistent signing keys, RBAC roles, filtered audit export |
 | **P5** | Docker, PyInstaller spec, multi-platform CI matrix |
 | **P6** | CONTRIBUTING, issue templates, docs site scaffold |
-| **P7** | Plugin system + AI workflow design docs, v1.0 checklist |
+| **P7** | Plugin loader, workflow generator, v1.0 release assets |
+| **P8** | Enterprise horizon (auth, HSM, governed live adapters) — roadmap |
 
 ## Adapters (7 reviewed, simulator-only)
 
@@ -47,6 +48,13 @@ python scripts/demo_p0_overdrive.py
 python scripts/generate_sbom.py --check
 python scripts/validate_governance.py
 python scripts/scan_prohibited_capabilities.py
+```
+
+v1.0 showcase:
+
+```bash
+python scripts/demo_v1_showcase.py
+python scripts/validate_plugins.py
 ```
 
 Console demo:

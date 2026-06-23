@@ -4,8 +4,12 @@ import json
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
+from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
+from .p7_plugins import discover_plugins, plugin_catalog_markdown
+from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
+from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS
 
 
@@ -45,7 +49,21 @@ class MasterBlasterBridge(QWidget):
         self.dashboard_btn.clicked.connect(self.show_acceptance_dashboard)
         buttons.addWidget(self.dashboard_btn)
 
+        row2 = QHBoxLayout()
+        self.phase_btn = QPushButton("Phase Roadmap P0-P8")
+        self.phase_btn.clicked.connect(self.show_phase_roadmap)
+        row2.addWidget(self.phase_btn)
+
+        self.plugins_btn = QPushButton("Plugin Catalog")
+        self.plugins_btn.clicked.connect(self.show_plugin_catalog)
+        row2.addWidget(self.plugins_btn)
+
+        self.workflow_btn = QPushButton("Generate Workflow Draft")
+        self.workflow_btn.clicked.connect(self.show_workflow_draft)
+        row2.addWidget(self.workflow_btn)
+
         lay.addLayout(buttons)
+        lay.addLayout(row2)
 
         self.refresh_scripts()
 
@@ -67,6 +85,23 @@ class MasterBlasterBridge(QWidget):
     def show_acceptance_dashboard(self):
         self.output.clear()
         self.output.append(acceptance_dashboard_markdown())
+
+    def show_phase_roadmap(self):
+        self.output.clear()
+        self.output.append(phases_dashboard_markdown())
+
+    def show_plugin_catalog(self):
+        self.output.clear()
+        plugins = discover_plugins()
+        self.output.append(plugin_catalog_markdown(plugins))
+        self.output.append(json.dumps([plugin.to_dict() for plugin in plugins], indent=2, sort_keys=True))
+
+    def show_workflow_draft(self):
+        self.output.clear()
+        target = getattr(self.main, "global_target", "") or "example.com"
+        engagement = resolve_engagement(self.main.storage, getattr(self.main, "selected_engagement_id", "") or None, target)
+        draft = generate_workflow_draft(engagement)
+        self.output.append(workflow_draft_markdown(draft))
 
     def _launch_selected(self):
         self.output.append("Denied: P0 does not allow direct script execution.")

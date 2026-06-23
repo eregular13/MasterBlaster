@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 from .p0_acceptance import acceptance_summary
+from .p7_plugins import discover_plugins
 
 PhaseStatusLabel = Literal["complete", "in_progress", "not_started"]
 
@@ -23,70 +24,30 @@ class PhaseProgress:
 
 def list_phase_progress() -> tuple[PhaseProgress, ...]:
     p0 = acceptance_summary()
+    plugin_count = len(discover_plugins())
     return (
+        PhaseProgress("P0", "Simulator perfection", p0.overall_percent, "complete", (), "Ship-ready deny-by-default simulator."),
+        PhaseProgress("P1", "Persistence + CRUD UI", 100, "complete", (), "CRUD, engagement picker, retention, exports."),
+        PhaseProgress("P2", "Safe live-simulation layer", 100, "complete", (), "Mock transport, rate limit, A5/A6."),
+        PhaseProgress("P3", "Advanced orchestration", 100, "complete", (), "Compliance drafts and findings projection."),
+        PhaseProgress("P4", "Security hardening", 100, "complete", (), "Signing keys, RBAC, audit export filters."),
+        PhaseProgress("P5", "Production readiness", 100, "complete", (), "Docker, PyInstaller, CI matrix."),
+        PhaseProgress("P6", "Community and polish", 100, "complete", (), "CONTRIBUTING, templates, docs scaffold."),
         PhaseProgress(
-            phase_id="P0",
-            name="Simulator perfection",
-            percent=p0.overall_percent,
-            status="complete",
-            blockers=(),
-            focus="Ship-ready deny-by-default simulator demo.",
+            "P7",
+            "Visionary extension",
+            100,
+            "complete",
+            (),
+            f"Plugin loader ({plugin_count} plugins), workflow generator, v1.0 assets.",
         ),
         PhaseProgress(
-            phase_id="P1",
-            name="Persistence + CRUD UI",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="CRUD forms, engagement picker, retention presets, exports.",
-        ),
-        PhaseProgress(
-            phase_id="P2",
-            name="Safe live-simulation layer",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Mock transport, rate-limit simulator, A5/A6 adapters.",
-        ),
-        PhaseProgress(
-            phase_id="P3",
-            name="Advanced orchestration",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Findings projection, compliance draft generator, export options.",
-        ),
-        PhaseProgress(
-            phase_id="P4",
-            name="Security hardening",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Persistent signing keys, RBAC skeleton, filtered audit export.",
-        ),
-        PhaseProgress(
-            phase_id="P5",
-            name="Production readiness",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Docker, PyInstaller spec, multi-platform CI matrix.",
-        ),
-        PhaseProgress(
-            phase_id="P6",
-            name="Community and polish",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Contribution guide, issue templates, docs site scaffold.",
-        ),
-        PhaseProgress(
-            phase_id="P7",
-            name="Visionary extension",
-            percent=100,
-            status="complete",
-            blockers=(),
-            focus="Plugin system design, AI workflow spec, v1.0 release checklist.",
+            "P8",
+            "Enterprise horizon",
+            15,
+            "in_progress",
+            ("multi_tenant_auth", "hsm_signing", "live_adapter_governance"),
+            "Auth, HSM keys, governed live adapters — post-v1.0 roadmap.",
         ),
     )
 
