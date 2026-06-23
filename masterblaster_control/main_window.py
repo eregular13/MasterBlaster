@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 from .masterblaster_bridge import MasterBlasterBridge
 from .mcp_definitions import MCPS, get_mcp_by_id
 from .mcp_tab import MCPTab
+from .p0_resources import resource_summary_markdown
 from .p0_storage import P0Storage, StorageSnapshot
 from .runner_simulator import MANIFESTS, RunnerSimulator
 from .utils import dark_kali_stylesheet, write_watermarked_report
@@ -549,6 +550,9 @@ class MainWindow(QMainWindow):
             "",
             "## Latest Persistent Evidence",
             self._persistent_evidence_text(),
+            "",
+            "## Non-Executing Planning Resources",
+            resource_summary_markdown(),
             "",
             "## Adapter Outputs",
         ]

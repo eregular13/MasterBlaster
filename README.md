@@ -13,6 +13,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - One A1 TLS assessment adapter using a fake transport only.
 - Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
 - SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
+- Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
 - Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
 
 ## Non-Goals in P0
@@ -37,10 +38,10 @@ python -m pytest
 Validate reviewed manifests from a shell:
 
 ```bash
-./scripts/verify_kali_tools.sh
+python scripts/validate_p0_registry.py
 ```
 
-The script name is retained for compatibility, but it now validates P0 manifests only. It does not install packages.
+The legacy `./scripts/verify_kali_tools.sh` wrapper is retained for compatibility, but it now delegates to the Python validator. It does not install packages.
 
 ## Adapter Manifests
 
@@ -63,6 +64,18 @@ The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator s
 
 The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
 
+## Non-Executing Resources
+
+The P0 resource registry lives in `masterblaster_control/p0_resources.py`. It includes deterministic planning, reporting, and governance templates:
+
+- `p0://planning/engagement-template`
+- `p0://planning/rules-of-engagement-template`
+- `p0://planning/workflow-template`
+- `p0://reporting/report-draft-outline`
+- `p0://governance/acceptance-checklist`
+
+These resources are inert content. They can support UI and future MCP read operations, but they cannot execute jobs, approve scope, or override runner policy.
+
 ## Security Notes
 
 - The UI is not a trusted authorization boundary; the runner re-validates each signed job envelope.
@@ -70,7 +83,8 @@ The storage layer is deliberately passive. It does not authorize jobs, execute a
 - Evidence content is deterministic fixture data and is hashed before report inclusion.
 - Persistent audit records are local simulator artifacts and should not contain secrets.
 - Reports are drafts and must not be represented as compliance certification.
+- See `docs/P0_ACCEPTANCE_CHECKLIST.md` before discussing any P1 or live capability.
 
 ## Roadmap
 
-Phase P0 should continue by adding durable tenant/client/engagement storage, migrations, MCP planning/reporting resources that remain non-executing, broader schema documentation, CI dependency review, and an SBOM workflow. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.
+Phase P0 should continue by adding human approval state, tenant/client/engagement management UI, an MCP wrapper for non-executing resources and draft-only tools, additional fixture adapters, CI dependency review, and an SBOM workflow. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.
