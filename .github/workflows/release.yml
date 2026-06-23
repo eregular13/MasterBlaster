@@ -35,6 +35,7 @@ jobs:
           python -m pytest
           python scripts/validate_p0_registry.py
           python scripts/validate_plugins.py
+          python scripts/validate_mcp_catalog.py
           python scripts/validate_plugin_submission.py
           python scripts/generate_sbom_stub.py --output dist/sbom.cdx.json
 

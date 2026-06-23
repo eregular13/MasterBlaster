@@ -32,6 +32,9 @@ jobs:
       - name: Refresh SPDX SBOM
         run: python scripts/generate_sbom.py
 
+      - name: Validate 22-MCP catalog
+        run: python scripts/validate_mcp_catalog.py
+
       - name: Validate reviewed P0 registry
         run: python scripts/validate_p0_registry.py
 
