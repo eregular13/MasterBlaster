@@ -84,6 +84,25 @@ def test_storage_exports_and_evidence_lookup():
     assert payload[0]["evidence_id"] == evidence_id
 
 
+def test_delete_engagement_cascades_related_records():
+    storage = P0Storage(":memory:")
+    storage.initialize()
+    from masterblaster_control.p0_approvals import approve_request, request_approval
+    from masterblaster_control.runner_simulator import RunnerSimulator, build_default_engagement
+
+    now = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = approve_request(
+        request_approval(engagement, "a0.fixture.inventory", "example.com", now=now),
+        now=now,
+    )
+    result = runner.run("a0.fixture.inventory", "example.com", engagement=engagement, approval=approval, now=now)
+    storage.record_runner_result(result)
+    assert storage.delete_engagement("engagement-local-simulator") == 1
+    assert storage.list_engagements() == []
+
+
 def test_storage_filters_evidence_by_job_id():
     storage = P0Storage(":memory:")
     storage.initialize()

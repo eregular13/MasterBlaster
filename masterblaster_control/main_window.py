@@ -39,10 +39,15 @@ from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_approvals import approve_request, deny_request
 from .p0_models import ApprovalRequest
 from .p0_resources import resource_summary_markdown
+from .engagement_picker import list_engagement_choices, resolve_engagement
+from .p0_retention import RetentionPolicy
 from .p0_storage import P0Storage, StorageSnapshot
+from .p3_reporting import compliance_draft_markdown, export_compliance_draft_json, generate_compliance_draft
+from .p4_security import KeyStore, RBAC
+from .phase_tracker import phases_dashboard_markdown
 from .runner_simulator import MANIFESTS, RunnerSimulator
 from .storage_browser import StorageBrowser
-from .utils import dark_kali_stylesheet, write_watermarked_report
+from .utils import dark_kali_stylesheet, write_export_file, write_watermarked_report
 
 
 class DashboardCard(QFrame):
@@ -95,16 +100,18 @@ class DashboardCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MasterBlaster P0 Authorized Assessment Simulator")
+        self.setWindowTitle("MasterBlaster Authorized Assessment Control Plane")
         self.resize(1250, 820)
 
         self.settings = QSettings("MasterBlaster", "P0Simulator")
         self.global_target = ""
         self.watermark_enabled = self.settings.value("watermark", True, type=bool)
         self.ethics_accepted = self.settings.value("ethics_accepted", False, type=bool)
-        self.runner = RunnerSimulator()
+        self.rbac = RBAC()
+        self.runner = RunnerSimulator(signing_key=KeyStore().load_or_create())
         self.storage = P0Storage.default()
         self.storage.initialize()
+        self.selected_engagement_id = self.settings.value("selected_engagement_id", "", type=str)
 
         self.dashboard_cards = {}
         self.workflow_chain = []
@@ -135,9 +142,15 @@ class MainWindow(QMainWindow):
 
         self.target_edit = QLineEdit()
         self.target_edit.setPlaceholderText("Authorized target binding, for example example.com")
-        self.target_edit.setMinimumWidth(300)
+        self.target_edit.setMinimumWidth(220)
         self.target_edit.textChanged.connect(self._on_global_target_changed)
-        top_layout.addWidget(self.target_edit, 4)
+        top_layout.addWidget(self.target_edit, 3)
+
+        self.engagement_combo = QComboBox()
+        self.engagement_combo.setMinimumWidth(260)
+        self.engagement_combo.currentIndexChanged.connect(self._on_engagement_changed)
+        top_layout.addWidget(self.engagement_combo, 2)
+        self._refresh_engagement_picker()
 
         self.validate_btn = QPushButton("Validate Manifests")
         self.validate_btn.clicked.connect(self._verify_and_install_kali_tools)
@@ -155,6 +168,8 @@ class MainWindow(QMainWindow):
         self.setMenuBar(QMenuBar())
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Export Report Draft", self._export_all_reports)
+        file_menu.addAction("Export Compliance Draft (JSON)", self._export_compliance_json)
+        file_menu.addAction("Export Compliance Draft (Markdown)", self._export_compliance_md)
         file_menu.addAction("Settings", self._open_settings)
         file_menu.addSeparator()
         exit_action = QAction("Exit", self)
@@ -588,6 +603,9 @@ class MainWindow(QMainWindow):
             "## P0 Acceptance Dashboard",
             acceptance_dashboard_markdown(),
             "",
+            "## Phase Roadmap (P0-P7)",
+            phases_dashboard_markdown(),
+            "",
             "## Non-Executing Planning Resources",
             resource_summary_markdown(),
             "",
@@ -601,8 +619,27 @@ class MainWindow(QMainWindow):
         self.log_message(f"Report draft saved to {path}")
         QMessageBox.information(self, "Export", f"Report draft exported:\n{path}")
 
+    def _refresh_engagement_picker(self):
+        current = self.selected_engagement_id
+        self.engagement_combo.blockSignals(True)
+        self.engagement_combo.clear()
+        for label, engagement_id in list_engagement_choices(self.storage):
+            self.engagement_combo.addItem(label, engagement_id)
+        index = self.engagement_combo.findData(current)
+        self.engagement_combo.setCurrentIndex(index if index >= 0 else 0)
+        self.engagement_combo.blockSignals(False)
+
+    def _on_engagement_changed(self):
+        self.selected_engagement_id = self.engagement_combo.currentData() or ""
+        self.settings.setValue("selected_engagement_id", self.selected_engagement_id)
+        if self.selected_engagement_id:
+            self.log_message(f"Engagement binding: {self.selected_engagement_id}")
+
+    def get_active_engagement(self, target: str):
+        return resolve_engagement(self.storage, self.selected_engagement_id or None, target)
+
     def _open_settings(self):
-        from PySide6.QtWidgets import QDialog
+        from PySide6.QtWidgets import QDialog, QSpinBox
 
         dlg = QDialog(self)
         dlg.setWindowTitle("Settings")
@@ -611,12 +648,74 @@ class MainWindow(QMainWindow):
         wm_cb.setChecked(self.watermark_enabled)
         wm_cb.toggled.connect(lambda value: setattr(self, "watermark_enabled", value))
         lay.addWidget(wm_cb)
+
+        role_combo = QComboBox()
+        role_combo.addItems(["viewer", "operator", "admin"])
+        role_combo.setCurrentText(self.rbac.principal.role)
+        lay.addWidget(QLabel("RBAC role (local simulator)"))
+        lay.addWidget(role_combo)
+
+        lay.addWidget(QLabel("Retention presets (days)"))
+        audit_days = QSpinBox()
+        audit_days.setRange(1, 3650)
+        audit_days.setValue(int(self.settings.value("retention_audit_days", 30, type=int)))
+        lay.addWidget(QLabel("Audit events"))
+        lay.addWidget(audit_days)
+        evidence_days = QSpinBox()
+        evidence_days.setRange(1, 3650)
+        evidence_days.setValue(int(self.settings.value("retention_evidence_days", 30, type=int)))
+        lay.addWidget(QLabel("Evidence"))
+        lay.addWidget(evidence_days)
+
+        apply_retention = QPushButton("Apply Retention Purge Now")
+        def _apply_retention():
+            try:
+                self.rbac.require("apply.retention")
+            except PermissionError as exc:
+                QMessageBox.warning(self, "Permission Denied", str(exc))
+                return
+            policy = RetentionPolicy(
+                audit_retention_days=audit_days.value(),
+                evidence_retention_days=evidence_days.value(),
+                job_retention_days=evidence_days.value(),
+                approval_retention_days=audit_days.value(),
+            )
+            result = self.storage.apply_retention(policy)
+            QMessageBox.information(
+                self,
+                "Retention Applied",
+                f"Deleted approvals={result.approvals_deleted}, jobs={result.jobs_deleted}, "
+                f"evidence={result.evidence_deleted}, audit={result.audit_events_deleted}",
+            )
+            if hasattr(self, "storage_browser"):
+                self.storage_browser.refresh()
+        apply_retention.clicked.connect(_apply_retention)
+        lay.addWidget(apply_retention)
+
         close_btn = QPushButton("Close")
-        close_btn.clicked.connect(dlg.accept)
+        def _close():
+            from .p4_security import Principal
+            self.rbac = RBAC(Principal(user_id="local-user", role=role_combo.currentText()))
+            self.settings.setValue("retention_audit_days", audit_days.value())
+            self.settings.setValue("retention_evidence_days", evidence_days.value())
+            dlg.accept()
+        close_btn.clicked.connect(_close)
         lay.addWidget(close_btn)
         dlg.exec()
         self.settings.setValue("watermark", self.watermark_enabled)
         self.log_message("Settings updated.")
+
+    def _export_compliance_json(self):
+        draft = generate_compliance_draft(self.storage)
+        path = write_export_file(export_compliance_draft_json(draft), "compliance_draft", "json")
+        self.log_message(f"Compliance draft JSON exported to {path}")
+        QMessageBox.information(self, "Export", f"Compliance draft JSON:\n{path}")
+
+    def _export_compliance_md(self):
+        draft = generate_compliance_draft(self.storage)
+        path = write_watermarked_report(compliance_draft_markdown(draft), self.watermark_enabled, prefix="compliance_draft")
+        self.log_message(f"Compliance draft Markdown exported to {path}")
+        QMessageBox.information(self, "Export", f"Compliance draft Markdown:\n{path}")
 
     def _show_about(self):
         QMessageBox.information(

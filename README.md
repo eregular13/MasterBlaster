@@ -1,130 +1,76 @@
-# MasterBlaster P0 Authorized Assessment Simulator
+# MasterBlaster Authorized Security Assessment Control Plane
 
-MasterBlaster is being narrowed into an authorized security assessment control plane. The current implementation is a Phase P0 simulator: it validates reviewed adapter manifests, deterministic target scope, signed expiring job envelopes, and hashed fixture evidence without running live tools or touching targets.
+MasterBlaster is an authorized security assessment control plane that progresses through phased delivery from a deny-by-default simulator (P0) to a community-ready platform (P7).
 
-## Current P0 Capabilities
+**Current branch:** `feature/p0-continuation` — P0-P7 roadmap modules implemented; simulator-first invariants preserved.
 
-- Reviewed adapter manifest registry with deny-by-default lookup.
-- Deterministic target parsing for host, domain, IP, CIDR, and HTTP(S) URL inputs.
-- Scope and rules-of-engagement policy decisions with stable reason codes.
-- Human approval artifacts validated by the runner before job issuance.
-- Signed, expiring, tenant-bound, client-bound, engagement-bound, target-bound, and adapter-bound job envelopes.
-- Runner simulator that independently validates policy and job signatures before emitting fixture evidence.
-- One offline A0 fixture inventory adapter.
-- One A1 TLS assessment adapter using a fake transport only.
-- Evidence records with parser provenance, adapter version, and SHA-256 content hashes.
-- SQLite persistence skeleton for tenants, clients, engagements, jobs, evidence, audit events, migrations, and report drafts.
-- Recursive storage redaction and explicit retention purge controls for local simulator artifacts.
-- Non-executing planning, reporting, and governance resources ready for a future MCP wrapper.
-- Read-only MCP-shaped facade for registered resources, planning briefs, and simulator report drafts.
-- Machine-readable P0 acceptance dashboard with evidence links and P1 blockers.
-- Desktop UI for simulator runs, workflow ordering, audit logs, and report drafts.
+## Capabilities
 
-## Non-Goals in P0
+| Phase | Highlights |
+| --- | --- |
+| **P0** | 100% acceptance — reviewed manifests, policy gate, signed jobs, fixture evidence |
+| **P1** | CRUD forms, engagement picker, retention presets, Records browser |
+| **P2** | Mock transport, rate-limit simulator, A5/A6 adapters |
+| **P3** | Findings projection, compliance draft generator (JSON/Markdown) |
+| **P4** | Persistent signing keys, RBAC roles, filtered audit export |
+| **P5** | Docker, PyInstaller spec, multi-platform CI matrix |
+| **P6** | CONTRIBUTING, issue templates, docs site scaffold |
+| **P7** | Plugin system + AI workflow design docs, v1.0 checklist |
 
-P0 does not install Kali tools, execute host commands, launch submodule scripts, scan networks, exploit services, brute-force credentials, collect secrets, or claim compliance. Unknown adapters, targets, arguments, and expired authorizations are denied.
+## Adapters (7 reviewed, simulator-only)
+
+- `a0.fixture.inventory` — offline inventory fixture
+- `a1.tls.assessment` — TLS parser, fake/mock transport
+- `a2.dns.posture` — DNS posture fixture
+- `a3.http.headers` — HTTP security headers fixture
+- `a4.tls.cert_expiry` — certificate expiry fixture
+- `a5.port.scan_sim` — P2 mock port scan
+- `a6.web.crawl_sim` — P2 mock web crawl
 
 ## Quick Start
 
 ```bash
 python -m venv .venv
-. .venv/bin/activate
+.venv\Scripts\activate        # Windows
 pip install -r requirements.txt
+python -m pytest
 python main.py
 ```
 
-Run the non-network test suite:
-
-```bash
-python -m pytest
-```
-
-Validate reviewed manifests from a shell:
-
-```bash
-python scripts/validate_p0_registry.py
-```
-
-The legacy `./scripts/verify_kali_tools.sh` wrapper is retained for compatibility, but it now delegates to the Python validator. It does not install packages.
-
-Run the console demo:
+Console demo:
 
 ```bash
 python scripts/demo_p0_overdrive.py
 ```
 
-The demo validates reviewed manifests and non-executing resources, runs one approved fixture simulator job and one denied approval path, records both outcomes in in-memory storage, previews redaction/retention controls, renders read-only MCP facade drafts, and prints acceptance blockers.
+Docker:
 
-## Adapter Manifests
+```bash
+docker compose up --build
+```
 
-The reviewed P0 manifests live in `masterblaster_control/runner_simulator.py`:
+## Desktop UI
 
-- `a0.fixture.inventory`: offline fixture parser, no network transport.
-- `a1.tls.assessment`: TLS parser behind a fake transport, no network transport.
-
-All UI actions route through these manifests and the runner simulator. There is no generic command execution API.
-
-## Local Storage
-
-The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator state. This database records runner results after policy validation:
-
-- tenant, client, and engagement records;
-- human approval artifacts;
-- signed job envelopes for allowed simulator runs;
-- hashed fixture evidence;
-- audit events for both denied and completed runs;
-- a migration table and report draft table skeleton.
-
-The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
-
-JSON values are recursively redacted before persistence when they use sensitive key names or inline secret assignment patterns. Local retention controls can purge old approvals, jobs, evidence records, and audit events in dependency-safe order.
-
-## Human Approval Gate
-
-Simulator jobs require an approval artifact before the runner issues a signed envelope. The Qt UI asks for local human confirmation, but the runner still validates that the approval is approved, unexpired, and bound to the same tenant, client, engagement, adapter, and target.
-
-Denied, expired, missing, or mismatched approvals fail closed.
-
-## Non-Executing Resources
-
-The P0 resource registry lives in `masterblaster_control/p0_resources.py`. It includes deterministic planning, reporting, and governance templates:
-
-- `p0://planning/engagement-template`
-- `p0://planning/rules-of-engagement-template`
-- `p0://planning/workflow-template`
-- `p0://reporting/report-draft-outline`
-- `p0://governance/acceptance-checklist`
-
-These resources are inert content. They can support UI and future MCP read operations, but they cannot execute jobs, approve scope, or override runner policy.
-
-`masterblaster_control/p0_mcp_readonly.py` wraps these resources in a dependency-free, MCP-shaped facade. It exposes descriptor reads plus two draft renderers:
-
-- `planning_brief`: a non-executing engagement planning brief.
-- `report_draft`: a simulator-only report draft based on local audit/evidence summaries.
-
-The facade has no job execution, approval mutation, adapter invocation, network transport, shell, or policy override surface.
-
-## Acceptance Dashboard
-
-The acceptance registry lives in `masterblaster_control/p0_acceptance.py` and renders `docs/P0_ACCEPTANCE_CHECKLIST.md`. It reports:
-
-- overall reference completion;
-- P1 gate completion;
-- evidence files for each criterion;
-- explicit blockers before any live-capability discussion.
-
-The Qt Guardrails panel and report draft exports include the dashboard.
+- **Dashboard** — live adapter cards
+- **Simulator tabs** — per-adapter runs with human approval gate
+- **Records** — CRUD, audit/evidence browser, exports, deep-links
+- **Guardrails** — acceptance + phase dashboards
+- **File menu** — report + compliance draft exports
 
 ## Security Notes
 
-- The UI is not a trusted authorization boundary; the runner re-validates each signed job envelope.
-- Job signing keys are generated in memory for the local simulator and are not logged.
-- Evidence content is deterministic fixture data and is hashed before report inclusion.
-- Persistent audit records are local simulator artifacts and should not contain secrets.
-- Storage redaction is defensive; secrets still must not be entered into simulator payloads.
-- Reports are drafts and must not be represented as compliance certification.
-- See `docs/P0_ACCEPTANCE_CHECKLIST.md` before discussing any P1 or live capability.
+- No live network transport or host command execution in current phases
+- UI is not a trusted authorization boundary
+- Reports are drafts — not compliance certification
+- See `docs/REVIEW_POLICY.md` and `ethics.md`
 
-## Roadmap
+## Contributing
 
-Phase P0 should continue by adding tenant/client/engagement management UI, additional fixture adapters, CI dependency review, an SBOM workflow, and security-sensitive review policy. A2/A3 live capabilities remain out of scope until P0 acceptance criteria pass.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security-sensitive paths require review per `.github/CODEOWNERS`.
+
+## Roadmap Docs
+
+- [Plugin System](docs/design/plugin-system.md)
+- [AI Workflow Generator](docs/design/ai-workflow-generator.md)
+- [v1.0 Release Checklist](docs/V1_RELEASE_CHECKLIST.md)
+- [Docs Site Scaffold](docs/site/index.md)

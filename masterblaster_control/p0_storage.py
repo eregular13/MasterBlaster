@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from .p0_models import ApprovalRequest, Engagement, EvidenceRecord
+from .p0_models import ApprovalRequest, Engagement, EvidenceRecord, RulesOfEngagement, ScopeTarget
 from .p0_policy import canonical_json
 from .p0_retention import RetentionPolicy, RetentionResult, redact_for_storage, retention_cutoff
 from .runner_simulator import RunnerResult
@@ -379,7 +379,54 @@ class P0Storage:
         self.initialize()
         with self.connect() as connection:
             self._upsert_engagement(connection, engagement)
-            connection.commit()
+
+    def get_engagement(self, engagement_id: str) -> dict[str, Any] | None:
+        self.initialize()
+        row = self.connect().execute(
+            """
+            SELECT engagement_id, tenant_id, client_id, scope_json, rules_json, expires_at, updated_at
+            FROM engagements WHERE engagement_id = ?
+            """,
+            (engagement_id,),
+        ).fetchone()
+        if not row:
+            return None
+        result = self._row_to_dict(row)
+        result["scope"] = result.pop("scope", [])
+        result["rules"] = result.pop("rules", {})
+        return result
+
+    def engagement_to_model(self, row: dict[str, Any]) -> Engagement:
+        rules = row.get("rules", {})
+        expires_at = datetime.fromisoformat(row["expires_at"])
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return Engagement(
+            engagement_id=row["engagement_id"],
+            tenant_id=row["tenant_id"],
+            client_id=row["client_id"],
+            authorized_targets=tuple(ScopeTarget(pattern=item) for item in row.get("scope", [])),
+            rules=RulesOfEngagement(
+                allow_network_transport=bool(rules.get("allow_network_transport", False)),
+                max_runtime_seconds=int(rules.get("max_runtime_seconds", 30)),
+                notes=str(rules.get("notes", "")),
+            ),
+            expires_at=expires_at,
+        )
+
+    def delete_engagement(self, engagement_id: str) -> int:
+        self.initialize()
+        connection = self.connect()
+        with connection:
+            connection.execute(
+                "DELETE FROM evidence_records WHERE job_id IN (SELECT job_id FROM jobs WHERE engagement_id = ?)",
+                (engagement_id,),
+            )
+            connection.execute("DELETE FROM jobs WHERE engagement_id = ?", (engagement_id,))
+            connection.execute("DELETE FROM approvals WHERE engagement_id = ?", (engagement_id,))
+            connection.execute("DELETE FROM audit_events WHERE engagement_id = ?", (engagement_id,))
+            cursor = connection.execute("DELETE FROM engagements WHERE engagement_id = ?", (engagement_id,))
+            return cursor.rowcount
 
     def export_audit_events_csv(self, limit: int = 500) -> str:
         events = self.list_audit_events(limit=limit)

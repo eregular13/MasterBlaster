@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -22,6 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .engagement_picker import update_engagement_scope
 from .p0_models import Engagement, RulesOfEngagement, ScopeTarget
 from .p0_storage import P0Storage
 from .utils import write_export_file
@@ -109,10 +111,22 @@ class StorageBrowser(QWidget):
         manage_layout.addStretch()
         self.tabs.addTab(manage_tab, "Manage")
 
+        engagement_tab = QWidget()
+        engagement_layout = QVBoxLayout(engagement_tab)
         self.engagement_table = self._make_table(
             ["Engagement", "Tenant", "Client", "Scope", "Expires", "Updated"]
         )
-        self.tabs.addTab(self.engagement_table, "Engagements")
+        engagement_layout.addWidget(self.engagement_table)
+        engagement_actions = QHBoxLayout()
+        self.edit_engagement_btn = QPushButton("Edit Selected Engagement")
+        self.edit_engagement_btn.clicked.connect(self._edit_selected_engagement)
+        engagement_actions.addWidget(self.edit_engagement_btn)
+        self.delete_engagement_btn = QPushButton("Delete Selected Engagement")
+        self.delete_engagement_btn.clicked.connect(self._delete_selected_engagement)
+        engagement_actions.addWidget(self.delete_engagement_btn)
+        engagement_actions.addStretch()
+        engagement_layout.addLayout(engagement_actions)
+        self.tabs.addTab(engagement_tab, "Engagements")
 
         self.audit_table = self._make_table(
             ["Time", "Action", "Reason", "Engagement", "Details"]
@@ -184,10 +198,19 @@ class StorageBrowser(QWidget):
         self._refresh_audit_table()
         self._refresh_evidence_table()
 
+    def _notify_main_refresh(self) -> None:
+        parent = self.parent()
+        while parent is not None:
+            if hasattr(parent, "_refresh_engagement_picker"):
+                parent._refresh_engagement_picker()
+                return
+            parent = parent.parent()
+
     def _save_tenant(self) -> None:
         try:
             self.storage.create_tenant(self.tenant_id_input.text(), self.tenant_name_input.text())
             self.refresh()
+            self._notify_main_refresh()
             QMessageBox.information(self, "Tenant Saved", "Tenant record saved.")
         except ValueError as exc:
             QMessageBox.warning(self, "Validation Error", str(exc))
@@ -228,9 +251,60 @@ class StorageBrowser(QWidget):
         try:
             self.storage.save_engagement(engagement)
             self.refresh()
+            self._notify_main_refresh()
             QMessageBox.information(self, "Engagement Saved", "Engagement record saved.")
         except Exception as exc:
             QMessageBox.warning(self, "Save Failed", str(exc))
+
+    def _selected_engagement_id(self) -> str | None:
+        row = self.engagement_table.currentRow()
+        if row < 0:
+            return None
+        item = self.engagement_table.item(row, 0)
+        return item.text() if item else None
+
+    def _edit_selected_engagement(self) -> None:
+        engagement_id = self._selected_engagement_id()
+        if not engagement_id:
+            QMessageBox.information(self, "Edit Engagement", "Select an engagement row first.")
+            return
+        scope, ok = QInputDialog.getText(
+            self,
+            "Edit Engagement Scope",
+            "Comma-separated authorized targets:",
+        )
+        if not ok:
+            return
+        patterns = [item.strip() for item in scope.split(",") if item.strip()]
+        if not patterns:
+            QMessageBox.warning(self, "Validation Error", "Scope cannot be empty.")
+            return
+        update_engagement_scope(self.storage, engagement_id, patterns, expires_minutes=120)
+        self.refresh()
+        self._notify_main_refresh()
+        QMessageBox.information(self, "Engagement Updated", f"Updated {engagement_id}.")
+
+    def _delete_selected_engagement(self) -> None:
+        engagement_id = self._selected_engagement_id()
+        if not engagement_id:
+            QMessageBox.information(self, "Delete Engagement", "Select an engagement row first.")
+            return
+        confirm = QMessageBox.question(
+            self,
+            "Delete Engagement",
+            f"Delete engagement {engagement_id} and related simulator records?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+        deleted = self.storage.delete_engagement(engagement_id)
+        if deleted:
+            self.refresh()
+            self._notify_main_refresh()
+            QMessageBox.information(self, "Deleted", f"Engagement {engagement_id} deleted.")
+        else:
+            QMessageBox.warning(self, "Not Found", f"Engagement {engagement_id} was not found.")
 
     def _refresh_engagement_table(self) -> None:
         rows = self.storage.list_engagements(limit=100)

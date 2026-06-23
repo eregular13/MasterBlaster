@@ -109,3 +109,24 @@ def test_tls_cert_expiry_fixture_completes_for_domain_target():
     assert result.evidence[0].content["transport"] == "fake"
     observation_ids = {item["id"] for item in result.evidence[0].content["observations"]}
     assert "tls.certificate.expired" in observation_ids
+
+
+def test_port_scan_mock_transport_completes():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    engagement = build_default_engagement("example.com", now=now)
+    approval = _approved(engagement, "a5.port.scan_sim", "example.com", now)
+    result = runner.run("a5.port.scan_sim", "example.com", engagement=engagement, approval=approval, now=now)
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "mock"
+
+
+def test_web_crawl_mock_transport_completes_for_url():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    runner = RunnerSimulator(signing_key=bytes(range(32)))
+    target = "https://example.com/"
+    engagement = build_default_engagement(target, now=now)
+    approval = _approved(engagement, "a6.web.crawl_sim", target, now)
+    result = runner.run("a6.web.crawl_sim", target, engagement=engagement, approval=approval, now=now)
+    assert result.status == "completed"
+    assert result.evidence[0].content["transport"] == "mock"
