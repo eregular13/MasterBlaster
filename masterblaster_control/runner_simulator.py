@@ -27,103 +27,13 @@ from .p0_policy import (
     sign_job_envelope,
     validate_job_envelope,
 )
+from .mcp_catalog import MCP_CATALOG_ORDER, build_mcp_catalog
 from .p2_mock_transport import MockTransport, MockTransportDenied
 
-_MANIFESTS: dict[str, AdapterManifest] = {
-    "a0.fixture.inventory": AdapterManifest(
-        adapter_id="a0.fixture.inventory",
-        name="A0 Fixture Inventory",
-        version="0.1.0",
-        tier="A0",
-        execution_mode="offline_fixture",
-        parameters=("target",),
-        allowed_target_types=("host", "domain", "ip", "cidr", "url"),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="Parses bundled fixture data only. No target network transport is available.",
-    ),
-    "a1.tls.assessment": AdapterManifest(
-        adapter_id="a1.tls.assessment",
-        name="A1 TLS Assessment",
-        version="0.1.0",
-        tier="A1",
-        execution_mode="fake_transport",
-        parameters=("target",),
-        allowed_target_types=("domain", "url"),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="Exercises the TLS parser behind a fake transport for tests and demos.",
-    ),
-    "a2.dns.posture": AdapterManifest(
-        adapter_id="a2.dns.posture",
-        name="A2 DNS Posture",
-        version="0.1.0",
-        tier="A2",
-        execution_mode="offline_fixture",
-        parameters=("target",),
-        allowed_target_types=("domain",),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="Parses bundled DNS posture fixture data. No resolver transport is available.",
-    ),
-    "a3.http.headers": AdapterManifest(
-        adapter_id="a3.http.headers",
-        name="A3 HTTP Headers",
-        version="0.1.0",
-        tier="A3",
-        execution_mode="offline_fixture",
-        parameters=("target",),
-        allowed_target_types=("url",),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="Parses bundled HTTP security header fixture data. No HTTP transport is available.",
-    ),
-    "a4.tls.cert_expiry": AdapterManifest(
-        adapter_id="a4.tls.cert_expiry",
-        name="A4 TLS Certificate Expiry",
-        version="0.1.0",
-        tier="A4",
-        execution_mode="fake_transport",
-        parameters=("target",),
-        allowed_target_types=("domain", "url"),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="Exercises certificate-expiry parsing behind a fake transport only.",
-    ),
-    "a5.port.scan_sim": AdapterManifest(
-        adapter_id="a5.port.scan_sim",
-        name="A5 Port Scan Simulator",
-        version="0.1.0",
-        tier="A5",
-        execution_mode="mock_transport",
-        parameters=("target",),
-        allowed_target_types=("host", "domain", "ip"),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="P2 mock transport port scan fixture. No packets are sent.",
-    ),
-    "a6.web.crawl_sim": AdapterManifest(
-        adapter_id="a6.web.crawl_sim",
-        name="A6 Web Crawl Simulator",
-        version="0.1.0",
-        tier="A6",
-        execution_mode="mock_transport",
-        parameters=("target",),
-        allowed_target_types=("url",),
-        network_access=False,
-        fixture_only=True,
-        reviewed=True,
-        description="P2 mock transport crawl fixture. No HTTP requests are made.",
-    ),
-}
+_MANIFESTS: dict[str, AdapterManifest] = build_mcp_catalog()
 
 MANIFESTS: Mapping[str, AdapterManifest] = MappingProxyType(_MANIFESTS)
+MCP_COUNT = len(MCP_CATALOG_ORDER)
 
 
 @dataclass(frozen=True)
@@ -240,7 +150,11 @@ class RunnerSimulator:
         job: JobEnvelope,
         now: datetime | None = None,
     ) -> EvidenceRecord:
-        if manifest.execution_mode in {"fake_transport", "mock_transport"}:
+        if manifest.execution_mode in {
+            "fake_transport",
+            "mock_transport",
+            "governed_transport",
+        }:
             payload = self._mock_transport.fetch(manifest.adapter_id, job.target, now=now)
             transport_label = "fake" if manifest.execution_mode == "fake_transport" else "mock"
             content: dict[str, Any] = {
@@ -294,6 +208,32 @@ class RunnerSimulator:
                 "policy_reason": REASON_ALLOW,
             }
             parser_id = "parser.http.headers.fixture.v1"
+        elif manifest.execution_mode in {"orchestrated_fixture", "export_compiler"}:
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "orchestrated",
+                "observations": [
+                    {"id": "orchestration.stage", "value": "fixture-complete"},
+                    {"id": "orchestration.mcp_tier", "value": manifest.tier},
+                    {"id": "orchestration.execution_mode", "value": manifest.execution_mode},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = f"parser.{manifest.adapter_id}.orchestrated.v1"
+        elif manifest.adapter_id == "mcp.binary.static":
+            content = {
+                "adapter_id": manifest.adapter_id,
+                "target": job.target,
+                "transport": "none",
+                "observations": [
+                    {"id": "binary.arch", "value": "x86_64"},
+                    {"id": "binary.pie", "value": True},
+                    {"id": "binary.canary", "value": True},
+                ],
+                "policy_reason": REASON_ALLOW,
+            }
+            parser_id = "parser.binary.static.fixture.v1"
         else:
             content = {
                 "adapter_id": manifest.adapter_id,

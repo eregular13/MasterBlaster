@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBox
 from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
+from .mcp_catalog import catalog_markdown
 from .p10_marketplace import marketplace_markdown
 from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
 from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
@@ -58,6 +59,10 @@ class MasterBlasterBridge(QWidget):
         self.phase_btn = QPushButton("Phase Roadmap P0-P10")
         self.phase_btn.clicked.connect(self.show_phase_roadmap)
         row2.addWidget(self.phase_btn)
+
+        self.catalog_btn = QPushButton("22 MCP Catalog")
+        self.catalog_btn.clicked.connect(self.show_mcp_catalog)
+        row2.addWidget(self.catalog_btn)
 
         self.plugins_btn = QPushButton("Plugin Catalog")
         self.plugins_btn.clicked.connect(self.show_plugin_catalog)
@@ -128,6 +133,10 @@ class MasterBlasterBridge(QWidget):
     def show_phase_roadmap(self):
         self.output.clear()
         self.output.append(phases_dashboard_markdown())
+
+    def show_mcp_catalog(self):
+        self.output.clear()
+        self.output.append(catalog_markdown())
 
     def show_plugin_catalog(self):
         self.output.clear()

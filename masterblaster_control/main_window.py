@@ -103,7 +103,7 @@ class DashboardCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MasterBlaster v1.0 — Authorized Assessment Control Plane")
+        self.setWindowTitle("MasterBlaster v2.0 Grokier — 22 MCP Command Center")
         self.resize(1250, 820)
 
         self.settings = QSettings("MasterBlaster", "P0Simulator")
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         top_layout = QHBoxLayout(top_bar)
         top_layout.setContentsMargins(10, 5, 10, 5)
 
-        logo = QLabel("MasterBlaster P0 Simulator")
+        logo = QLabel("MasterBlaster 22 MCP Command Center")
         logo.setFont(QFont("Consolas", 18, QFont.Weight.Bold))
         logo.setStyleSheet("color: #00ff9d;")
         top_layout.addWidget(logo)

@@ -60,6 +60,20 @@ class MockTransport:
                 "target": target,
                 "observations": [{"id": "tls.mock", "value": "fixture-handshake"}],
             }
+
+        fixture_map: dict[str, list[dict[str, object]]] = {
+            "a7.live.probe": [{"id": "governed.probe", "value": "feature-flag-mock-transport"}],
+            "mcp.network.service": [{"id": "service.banner", "value": "nginx/1.24 (fixture)"}],
+            "mcp.network.path": [{"id": "path.hops", "value": 4}, {"id": "path.mtu", "value": 1500}],
+            "mcp.web.fuzzer": [{"id": "fuzz.paths", "value": 42}, {"id": "fuzz.params", "value": 8}],
+            "mcp.web.inject": [{"id": "inject.candidates", "value": 3}],
+            "mcp.binary.dynamic": [{"id": "sandbox.trace", "value": "fixture-syscall-set"}],
+            "mcp.api.rest": [{"id": "api.endpoints", "value": 12}, {"id": "api.auth", "value": "bearer"}],
+            "mcp.api.graphql": [{"id": "graphql.introspection", "value": True}, {"id": "graphql.depth", "value": 4}],
+        }
+        if adapter_id in fixture_map:
+            return {"transport": "mock", "target": target, "observations": fixture_map[adapter_id]}
+
         return {
             "transport": "mock",
             "target": target,
