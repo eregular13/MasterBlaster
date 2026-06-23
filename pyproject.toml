@@ -9,7 +9,7 @@ description = "MasterBlaster — professional security assessment control plane 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "PySide6==6.7.0",
+    "PySide6>=6.7.0",
     "reportlab==4.2.0",
 ]
 
