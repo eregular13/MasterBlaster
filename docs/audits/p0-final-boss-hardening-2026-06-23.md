@@ -42,6 +42,7 @@
 ## Residual Risks
 
 - GitHub branch protection, required status checks, dependency graph support, and CODEOWNERS-required review are external repository settings. The repository files document the required settings but cannot prove they are enabled.
+- GitHub dependency review is advisory until Dependency graph support is enabled. The local SBOM check remains the required dependency drift gate in CI.
 - Persistent tenant/client/engagement management remains a local skeleton rather than a production authorization workflow.
 - The local simulator signing key is process-local and intended for P0 demo validation only.
 - Report exports remain Markdown drafts requiring human review.
@@ -80,6 +81,7 @@ Observed results:
 - `python scripts\validate_governance.py` -> succeeded.
 - `python scripts\scan_prohibited_capabilities.py` -> succeeded.
 - SBOM regenerated without hash drift: `CFF32464B6A103ED9E62EB681414E522496338E7B60451DDAA214DA0A82C06E3`.
+- GitHub `Dependency Review` workflow should be treated as local SBOM enforcement plus advisory dependency graph review until repository Dependency graph support is enabled.
 
 ## Why The System Remains Non-Executing
 

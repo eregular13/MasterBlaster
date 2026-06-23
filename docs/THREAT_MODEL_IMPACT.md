@@ -57,4 +57,4 @@ CI and governance files are not trusted authorization boundaries. They provide r
 - The local simulator signing key is process-local and intended only for demo validation.
 - Report exports are Markdown drafts and still require downstream review before use.
 - A future MCP network or stdio transport still needs integration tests proving it delegates only to the read-only facade.
-- GitHub remote enforcement settings cannot be proven from repository files alone; maintainers must enable required checks, dependency graph support, and CODEOWNERS-required review.
+- GitHub remote enforcement settings cannot be proven from repository files alone; maintainers must enable required checks, dependency graph support, and CODEOWNERS-required review. Without Dependency graph support, GitHub dependency review is advisory and cannot be claimed as active vulnerability enforcement.

@@ -248,10 +248,11 @@ _CRITERIA: tuple[AcceptanceCriterion, ...] = (
             ".github/workflows/dependency-review.yml",
             "scripts/generate_sbom.py",
             "sbom/masterblaster-p0.spdx.json",
+            "tests/test_ci_workflows.py",
             "tests/test_sbom_generation.py",
             "docs/supply-chain/sbom-and-dependency-review.md",
         ),
-        next_action="Enable dependency graph and required workflow checks in GitHub repository settings.",
+        next_action="Enable dependency graph and required workflow checks in GitHub repository settings; GitHub dependency review is advisory until then.",
     ),
     AcceptanceCriterion(
         criterion_id="governance.review_policy",

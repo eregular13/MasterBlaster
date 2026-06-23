@@ -46,18 +46,23 @@ python scripts/generate_sbom.py --list
 
 ## Dependency Review
 
-`.github/workflows/dependency-review.yml` runs GitHub's dependency review action on pull requests with read-only permissions. It is intended to catch newly introduced vulnerable dependencies or license/security changes visible to GitHub's dependency graph.
+`.github/workflows/dependency-review.yml` runs two pull-request checks with read-only permissions:
+
+- a required deterministic local SBOM drift check using `python scripts/generate_sbom.py --check`;
+- GitHub's dependency review action as an advisory platform check.
+
+The GitHub dependency review action is intended to catch newly introduced vulnerable dependencies or license/security changes visible to GitHub's dependency graph. It is configured as advisory until repository Dependency graph support is enabled, because GitHub returns a platform error when that feature is unavailable.
 
 The workflow uses `pull_request`, not `pull_request_target`, and does not expose secrets to untrusted pull-request code.
 
 ## Local Fallback
 
-When GitHub-hosted dependency review is unavailable, `python scripts/generate_sbom.py --check` is the deterministic local fallback. It detects dependency metadata changes that have not been reflected in the checked-in SPDX document.
+When GitHub-hosted dependency review is unavailable, `python scripts/generate_sbom.py --check` is the deterministic local fallback and the workflow gate. It detects dependency metadata changes that have not been reflected in the checked-in SPDX document.
 
 `python scripts/validate_p0_registry.py` also invokes the SBOM check so the standard P0 validator fails when dependency metadata and SBOM output drift apart.
 
 ## Known Limitations
 
 - The SBOM is dependency-metadata based; it is not an installed-environment inventory.
-- GitHub dependency review requires repository dependency graph support and appropriate GitHub-side availability.
+- GitHub dependency review requires repository dependency graph support and appropriate GitHub-side availability. Without it, the workflow emits a warning and relies on the local SBOM gate.
 - The repository can declare CODEOWNERS and workflows, but maintainers must enable branch protection or repository rulesets before required reviews and checks are enforced remotely.
