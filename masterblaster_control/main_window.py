@@ -103,7 +103,7 @@ class DashboardCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MasterBlaster v2.0 Grokier — 22 MCP Command Center")
+        self.setWindowTitle("MasterBlaster WARLORD — 22 MCP Command Plane")
         self.resize(1250, 820)
 
         self.settings = QSettings("MasterBlaster", "P0Simulator")
@@ -128,24 +128,24 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._apply_dark_theme()
         self._check_ethics()
-        self._update_status("Ready - P0 simulator, no live target execution")
+        self._update_status("Warlord online — 22 MCPs leashed. Crack the whip on authorized targets.")
 
     def _init_ui(self):
         top_bar = QWidget()
         top_layout = QHBoxLayout(top_bar)
         top_layout.setContentsMargins(10, 5, 10, 5)
 
-        logo = QLabel("MasterBlaster 22 MCP Command Center")
+        logo = QLabel("⚔ MasterBlaster WARLORD")
         logo.setFont(QFont("Consolas", 18, QFont.Weight.Bold))
-        logo.setStyleSheet("color: #00ff9d;")
+        logo.setStyleSheet("color: #ff4444;")
         top_layout.addWidget(logo)
 
-        badge = QLabel("DENY BY DEFAULT")
-        badge.setStyleSheet("background: #ff4444; color: white; padding: 2px 8px; border-radius: 3px;")
+        badge = QLabel("SCOPE LOCKED · WHIP READY")
+        badge.setStyleSheet("background: #8b0000; color: #ffd700; padding: 2px 8px; border-radius: 3px; font-weight: bold;")
         top_layout.addWidget(badge)
 
         self.target_edit = QLineEdit()
-        self.target_edit.setPlaceholderText("Authorized target binding, for example example.com")
+        self.target_edit.setPlaceholderText("Target in your crosshairs — authorized scope only (e.g. example.com)")
         self.target_edit.setMinimumWidth(220)
         self.target_edit.textChanged.connect(self._on_global_target_changed)
         top_layout.addWidget(self.target_edit, 3)
@@ -156,11 +156,11 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self.engagement_combo, 2)
         self._refresh_engagement_picker()
 
-        self.validate_btn = QPushButton("Validate Manifests")
+        self.validate_btn = QPushButton("Arm the Arsenal")
         self.validate_btn.clicked.connect(self._verify_and_install_kali_tools)
         top_layout.addWidget(self.validate_btn)
 
-        self.run_all_btn = QPushButton("Run P0 Simulators")
+        self.run_all_btn = QPushButton("Crack the Whip — All MCPs")
         self.run_all_btn.clicked.connect(self._run_all_mcps)
         top_layout.addWidget(self.run_all_btn)
 
@@ -311,13 +311,13 @@ class MainWindow(QMainWindow):
 
     def _show_ethics_dialog(self, force=False):
         msg = QMessageBox(self)
-        msg.setWindowTitle("Ethics and Authorization Notice")
+        msg.setWindowTitle("Warlord Authorization Doctrine")
         msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(
-            "MasterBlaster P0 is for explicitly authorized assessment planning and simulation only.\n\n"
-            "P0 does not run live tools or access targets. Every simulator job is still target-bound, "
-            "engagement-bound, expiring, signed, and policy-checked.\n\n"
-            "Continue?"
+            "MasterBlaster WARLORD commands 22 MCPs and full Kali-grade toolchains.\n\n"
+            "You may only deploy against targets you are explicitly authorized to assess. "
+            "Every strike is scope-bound, approval-gated, signed, and logged.\n\n"
+            "Accept the doctrine and enter the command plane?"
         )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
         if msg.exec() == QMessageBox.StandardButton.Ok:
@@ -760,9 +760,10 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             "About",
-            "MasterBlaster P0 Authorized Assessment Simulator\n\n"
-            "No live tools are executed. Jobs are manifest-bound, scope-checked, signed, "
-            "expiring, and validated by the runner simulator before fixture evidence is emitted.",
+            "MasterBlaster WARLORD — 22 MCP Command Plane\n\n"
+            "One interface. 22 MCPs. Total domination.\n\n"
+            "Orchestrate nmap, nuclei, sqlmap, ffuf, metasploit-class wrappers, and the full "
+            "arsenal through chained assault workflows — governed, approved, evidence-captured.",
         )
 
     def _storage_snapshot_text(self):

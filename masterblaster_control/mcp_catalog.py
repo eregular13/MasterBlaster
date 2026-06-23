@@ -63,7 +63,7 @@ def build_mcp_catalog() -> dict[str, AdapterManifest]:
             "A0 Fixture Inventory",
             "A0",
             "offline_fixture",
-            "Asset inventory and scope validation against fixture corpora.",
+            "Crack the whip on asset discovery — amass, theHarvester, assetfinder under command.",
         ),
         _manifest(
             "a1.tls.assessment",
@@ -102,7 +102,7 @@ def build_mcp_catalog() -> dict[str, AdapterManifest]:
             "A5 Port Scan Simulator",
             "A5",
             "mock_transport",
-            "Controlled port and service discovery via mock transport.",
+            "Unleash nmap, rustscan, masscan through governed port-scan orchestration.",
             allowed_target_types=("host", "domain", "ip"),
         ),
         _manifest(
@@ -157,7 +157,7 @@ def build_mcp_catalog() -> dict[str, AdapterManifest]:
             "MCP Web Fuzzer",
             "W1",
             "mock_transport",
-            "Content and parameter fuzzing orchestration.",
+            "Drive ffuf, feroxbuster, gobuster — shred paths until something screams.",
             allowed_target_types=("url",),
         ),
         _manifest(
@@ -165,7 +165,7 @@ def build_mcp_catalog() -> dict[str, AdapterManifest]:
             "MCP Web Inject",
             "W2",
             "mock_transport",
-            "Injection-class assessment runner (controlled fixtures).",
+            "Command sqlmap, commix, dalfox — injection strikes with full audit trail.",
             allowed_target_types=("url",),
         ),
         _manifest(
@@ -243,17 +243,21 @@ def build_mcp_catalog() -> dict[str, AdapterManifest]:
 
 
 def catalog_markdown() -> str:
+    from .mcp_tool_arsenal import WARLORD_TAGLINE, tools_for_mcp
+
     catalog = build_mcp_catalog()
     lines = [
-        "# MasterBlaster MCP Catalog (22)",
+        "# MasterBlaster Warlord MCP Catalog (22)",
         "",
-        "| # | MCP ID | Tier | Mode | Name |",
+        f"> {WARLORD_TAGLINE}",
+        "",
+        "| # | MCP ID | Tier | Tools | Name |",
         "| ---: | --- | --- | --- | --- |",
     ]
     for index, adapter_id in enumerate(MCP_CATALOG_ORDER, start=1):
         manifest = catalog[adapter_id]
+        tools = ", ".join(tools_for_mcp(adapter_id)) or "—"
         lines.append(
-            f"| {index:02d} | `{adapter_id}` | {manifest.tier} | "
-            f"{manifest.execution_mode} | {manifest.name} |"
+            f"| {index:02d} | `{adapter_id}` | {manifest.tier} | {tools} | {manifest.name} |"
         )
     return "\n".join(lines)

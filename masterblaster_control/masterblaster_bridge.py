@@ -8,6 +8,8 @@ from .engagement_picker import resolve_engagement
 from .p0_acceptance import acceptance_dashboard_markdown
 from .p0_resources import list_resources, read_resource, resource_summary_markdown
 from .mcp_catalog import catalog_markdown
+from .mcp_tool_arsenal import arsenal_markdown
+from .warlord_orchestrator import execute_warlord_chain, warlord_chain_markdown
 from .p10_marketplace import marketplace_markdown
 from .p7_plugins import discover_plugins, plugin_catalog_markdown, reload_plugins, set_plugin_dev_mode
 from .p7_workflow_generator import generate_workflow_draft, workflow_draft_markdown
@@ -16,7 +18,7 @@ from .p8_workflow_assistant import assistant_markdown
 from .p9_feature_flags import feature_flags_markdown
 from .p9_plugin_review import review_queue_markdown
 from .phase_tracker import phases_dashboard_markdown
-from .runner_simulator import MANIFESTS
+from .runner_simulator import MANIFESTS, RunnerSimulator
 
 
 class MasterBlasterBridge(QWidget):
@@ -27,9 +29,10 @@ class MasterBlasterBridge(QWidget):
         lay = QVBoxLayout(self)
         lay.addWidget(
             QLabel(
-                "<b>P0 Guardrails</b><br>"
-                "Direct script launching is disabled. Simulator jobs must pass reviewed "
-                "adapter manifests, scope policy, signed envelopes, and runner validation."
+                "<b>⚔ Warlord Command Post</b><br>"
+                "One interface. 22 MCPs. Total domination. Crack the whip — launch full toolchains "
+                "across nmap, nuclei, sqlmap, ffuf, burp, metasploit-class wrappers. "
+                "Every strike: scoped, approved, signed, logged."
             )
         )
 
@@ -60,9 +63,18 @@ class MasterBlasterBridge(QWidget):
         self.phase_btn.clicked.connect(self.show_phase_roadmap)
         row2.addWidget(self.phase_btn)
 
-        self.catalog_btn = QPushButton("22 MCP Catalog")
+        self.catalog_btn = QPushButton("22 MCP Arsenal")
         self.catalog_btn.clicked.connect(self.show_mcp_catalog)
         row2.addWidget(self.catalog_btn)
+
+        self.arsenal_btn = QPushButton("Kali Tool Bindings")
+        self.arsenal_btn.clicked.connect(self.show_tool_arsenal)
+        row2.addWidget(self.arsenal_btn)
+
+        self.whip_btn = QPushButton("Crack Assault Chain")
+        self.whip_btn.setToolTip("Execute 8-MCP warlord chain with evidence capture.")
+        self.whip_btn.clicked.connect(self.crack_assault_chain)
+        row2.addWidget(self.whip_btn)
 
         self.plugins_btn = QPushButton("Plugin Catalog")
         self.plugins_btn.clicked.connect(self.show_plugin_catalog)
@@ -137,6 +149,22 @@ class MasterBlasterBridge(QWidget):
     def show_mcp_catalog(self):
         self.output.clear()
         self.output.append(catalog_markdown())
+
+    def show_tool_arsenal(self):
+        self.output.clear()
+        self.output.append(arsenal_markdown())
+
+    def crack_assault_chain(self):
+        self.output.clear()
+        target = getattr(self.main, "global_target", "") or "example.com"
+        runner = getattr(self.main, "runner", RunnerSimulator())
+        engagement = resolve_engagement(
+            self.main.storage,
+            getattr(self.main, "selected_engagement_id", "") or None,
+            target,
+        )
+        result = execute_warlord_chain(runner, engagement, target)
+        self.output.append(warlord_chain_markdown(result))
 
     def show_plugin_catalog(self):
         self.output.clear()
