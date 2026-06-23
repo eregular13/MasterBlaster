@@ -58,7 +58,7 @@ The GitHub dependency review action is intended to catch newly introduced vulner
 
 The workflow uses `pull_request`, not `pull_request_target`, and does not expose secrets to untrusted pull-request code.
 
-`.github/workflows/p0-verification.yml` separately installs the project and development dependencies, imports `masterblaster_control.main_window`, imports PySide6 Qt widgets in offscreen mode, and then runs the P0 proof battery. This keeps installability, package data, and Qt import coverage distinct from the dependency-vulnerability review.
+`.github/workflows/p0-verification.yml` separately installs the project and development dependencies, installs the narrow Linux Qt runtime library needed by PySide6 on Ubuntu, imports `masterblaster_control.main_window`, imports PySide6 Qt widgets in offscreen mode, and then runs the P0 proof battery. This keeps installability, package data, and Qt import coverage distinct from the dependency-vulnerability review.
 
 ## Local Fallback
 

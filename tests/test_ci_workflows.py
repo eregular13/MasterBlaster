@@ -10,6 +10,7 @@ def test_p0_verification_workflow_uses_safe_pr_trigger_and_pinned_actions():
     assert "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065" in workflow
     assert "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" in workflow
     assert 'python-version: ["3.12"]' in workflow
+    assert "sudo apt-get install -y libegl1" in workflow
     assert 'python -m pip install -e ".[dev]"' in workflow
     assert "import masterblaster_control.main_window" in workflow
     assert "QT_QPA_PLATFORM: offscreen" in workflow
