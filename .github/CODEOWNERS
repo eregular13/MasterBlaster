@@ -45,3 +45,11 @@
 /tests/test_governance_review_policy.py @eregular13
 /tests/test_prohibited_capability_scanner.py @eregular13
 /tests/test_utils.py @eregular13
+/masterblaster_control/p7_plugins.py @eregular13
+/masterblaster_control/p8_auth.py @eregular13
+/masterblaster_control/p8_workflow_assistant.py @eregular13
+/scripts/mcp_stdio_server.py @eregular13
+/tests/test_p7_plugins.py @eregular13
+/tests/test_p8_*.py @eregular13
+/tests/test_mcp_stdio_server.py @eregular13
+/tests/test_adversarial_policy.py @eregular13

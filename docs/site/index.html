@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MasterBlaster — Authorized Assessment Control Plane</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; background: #111; color: #e8e8e8; line-height: 1.6; }
+    h1 { color: #00ff9d; }
+    a { color: #7ec8ff; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #444; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #222; }
+    .badge { display: inline-block; background: #ff4444; color: #fff; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+    code { background: #222; padding: 0.1rem 0.35rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>MasterBlaster v1.0</h1>
+  <p><span class="badge">DENY BY DEFAULT</span> Authorized security assessment control plane — simulator-only, no live tool execution.</p>
+
+  <h2>Quick start</h2>
+  <table>
+    <tr><th>Task</th><th>Command</th></tr>
+    <tr><td>Desktop UI</td><td><code>python main.py</code></td></tr>
+    <tr><td>Run tests</td><td><code>python -m pytest</code></td></tr>
+    <tr><td>Console demo</td><td><code>python scripts/demo_p0_overdrive.py</code></td></tr>
+    <tr><td>MCP stdio server</td><td><code>python scripts/mcp_stdio_server.py</code></td></tr>
+    <tr><td>Docker demo</td><td><code>docker compose up --build</code></td></tr>
+  </table>
+
+  <h2>Documentation</h2>
+  <ul>
+    <li><a href="../P0_ACCEPTANCE_CHECKLIST.md">P0 Acceptance Checklist</a></li>
+    <li><a href="../REVIEW_POLICY.md">Review Policy</a></li>
+    <li><a href="../SECURITY_IMPACT.md">Security Impact</a></li>
+    <li><a href="../THREAT_MODEL_IMPACT.md">Threat Model Impact</a></li>
+    <li><a href="../design/plugin-system.md">Plugin System Design</a></li>
+    <li><a href="../design/ai-workflow-generator.md">AI Workflow Generator</a></li>
+    <li><a href="../adr/0002-a7-live-adapter-governance.md">ADR 0002: A7 Live Adapter Governance</a></li>
+    <li><a href="../audits/p8-adversarial-pen-test-pack.md">P8 Adversarial Pen-Test Pack</a></li>
+    <li><a href="../V1_RELEASE_CHECKLIST.md">v1.0 Release Checklist</a></li>
+  </ul>
+
+  <h2>Roadmap</h2>
+  <p>P0–P7 complete. P8 enterprise horizon in progress (MCP, auth, hot-reload, installer CI). See <code>masterblaster_control/phase_tracker.py</code> for live percentages.</p>
+
+  <p><a href="https://github.com/eregular13/MasterBlaster">GitHub repository</a> — star the project to support governed live adapters.</p>
+</body>
+</html>

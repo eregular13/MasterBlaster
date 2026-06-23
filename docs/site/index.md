@@ -23,4 +23,4 @@ Welcome to the MasterBlaster Authorized Security Assessment Control Plane docume
 
 ## Roadmap
 
-See `masterblaster_control/phase_tracker.py` for the live P0-P7 phase dashboard rendered in report exports.
+See `masterblaster_control/phase_tracker.py` for the live P0-P9 phase dashboard rendered in report exports.

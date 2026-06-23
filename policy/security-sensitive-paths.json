@@ -221,6 +221,46 @@
       "pattern": "/tests/test_utils.py",
       "category": "tests",
       "rationale": "Report draft filesystem safety tests live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p7_plugins.py",
+      "category": "plugins",
+      "rationale": "P7 plugin discovery and hot-reload boundary lives here."
+    },
+    {
+      "pattern": "/masterblaster_control/p8_auth.py",
+      "category": "auth",
+      "rationale": "P8 local auth skeleton and RBAC mapping live here."
+    },
+    {
+      "pattern": "/masterblaster_control/p8_workflow_assistant.py",
+      "category": "assistant",
+      "rationale": "Deterministic workflow assistant enrichment lives here."
+    },
+    {
+      "pattern": "/scripts/mcp_stdio_server.py",
+      "category": "mcp",
+      "rationale": "Read-only MCP stdio transport wrapper lives here."
+    },
+    {
+      "pattern": "/tests/test_p7_plugins.py",
+      "category": "tests",
+      "rationale": "Plugin loader and hot-reload regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_p8_*.py",
+      "category": "tests",
+      "rationale": "P8 auth and assistant regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_mcp_stdio_server.py",
+      "category": "tests",
+      "rationale": "MCP stdio server regression tests live here."
+    },
+    {
+      "pattern": "/tests/test_adversarial_policy.py",
+      "category": "tests",
+      "rationale": "Adversarial deny-by-default pen-test pack lives here."
     }
   ]
 }

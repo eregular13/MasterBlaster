@@ -1,0 +1,37 @@
+name: Windows Installer Build
+
+on:
+  push:
+    branches:
+      - grok/masterblaster
+    paths:
+      - "packaging/**"
+      - "masterblaster_control/**"
+      - "main.py"
+      - ".github/workflows/build-installer.yml"
+  workflow_dispatch:
+
+jobs:
+  pyinstaller:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build MasterBlaster bundle
+        run: pyinstaller packaging/masterblaster.spec --noconfirm
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MasterBlaster-windows
+          path: dist/MasterBlaster/
+          retention-days: 14
