@@ -14,6 +14,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .p0_approvals import request_approval
+from .runner_simulator import build_default_engagement
+
 
 class MCPTab(QWidget):
     def __init__(self, mcp_def, main_window):
@@ -95,7 +98,18 @@ class MCPTab(QWidget):
         if hasattr(self.main, "update_mcp_status"):
             self.main.update_mcp_status(adapter_id, "Running", 30)
 
-        result = self.main.runner.run(adapter_id, target, arguments=arguments)
+        engagement = build_default_engagement(target)
+        approval_request = request_approval(engagement, adapter_id, target)
+        approval = self.main.request_human_approval(approval_request)
+        self.output.append(f"Approval state: {approval.state} ({approval.decision_reason or 'pending'})")
+
+        result = self.main.runner.run(
+            adapter_id,
+            target,
+            engagement=engagement,
+            approval=approval,
+            arguments=arguments,
+        )
         try:
             storage_snapshot = self.main.record_runner_result(result)
         except Exception as exc:
@@ -106,13 +120,16 @@ class MCPTab(QWidget):
         self.output.append(f"Policy decision: {decision.reason_code} - {decision.message}")
         self.output.append(
             "Storage snapshot: "
-            f"{storage_snapshot.jobs} job(s), {storage_snapshot.evidence_records} evidence record(s), "
-            f"{storage_snapshot.audit_events} audit event(s)"
+            f"{storage_snapshot.approvals} approval(s), {storage_snapshot.jobs} job(s), "
+            f"{storage_snapshot.evidence_records} evidence record(s), {storage_snapshot.audit_events} audit event(s)"
         )
 
         if not decision.allowed:
             self._finish_denied(decision.reason_code, decision.message)
             return
+
+        self.output.append("\nHuman approval artifact:")
+        self.output.append(json.dumps(result.approval.to_dict() if result.approval else {}, indent=2, sort_keys=True, default=str))
 
         job_payload = result.job.to_dict() if result.job else {}
         self.output.append("\nSigned job envelope:")

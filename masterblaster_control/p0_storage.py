@@ -8,11 +8,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from .p0_models import Engagement, EvidenceRecord
+from .p0_models import ApprovalRequest, Engagement, EvidenceRecord
 from .p0_policy import canonical_json
 from .runner_simulator import RunnerResult
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -20,6 +20,7 @@ class StorageSnapshot:
     tenants: int
     clients: int
     engagements: int
+    approvals: int
     jobs: int
     evidence_records: int
     audit_events: int
@@ -74,6 +75,13 @@ class P0Storage:
                 "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
                 (1, _utc_timestamp()),
             )
+            current_version = 1
+        if current_version < 2:
+            connection.executescript(_MIGRATION_002)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+                (2, _utc_timestamp()),
+            )
         if self._current_schema_version(connection) != SCHEMA_VERSION:
             raise RuntimeError("P0 storage schema version mismatch")
         connection.commit()
@@ -84,14 +92,16 @@ class P0Storage:
         connection = self.connect()
         with connection:
             self._upsert_engagement(connection, engagement)
+            if result.approval:
+                self._insert_approval(connection, result.approval)
             if result.job:
                 connection.execute(
                     """
                     INSERT OR REPLACE INTO jobs (
                         job_id, tenant_id, client_id, engagement_id, adapter_id,
-                        target, arguments_json, issued_at, expires_at, signature,
+                        target, arguments_json, issued_at, expires_at, signature, approval_id,
                         status, decision_reason, decision_message
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         result.job.job_id,
@@ -104,6 +114,7 @@ class P0Storage:
                         result.job.issued_at.isoformat(),
                         result.job.expires_at.isoformat(),
                         result.job.signature,
+                        result.approval.approval_id if result.approval else None,
                         result.status,
                         result.decision.reason_code,
                         result.decision.message,
@@ -118,8 +129,14 @@ class P0Storage:
                 reason_code=result.decision.reason_code,
                 details={
                     "job_id": result.job.job_id if result.job else None,
-                    "adapter_id": result.job.adapter_id if result.job else None,
-                    "target": result.job.target if result.job else result.decision.normalized_target,
+                    "approval_id": result.approval.approval_id if result.approval else None,
+                    "approval_state": result.approval.state if result.approval else None,
+                    "adapter_id": result.job.adapter_id if result.job else result.approval.adapter_id if result.approval else None,
+                    "target": result.job.target
+                    if result.job
+                    else result.approval.target
+                    if result.approval
+                    else result.decision.normalized_target,
                     "evidence_ids": [evidence.evidence_id for evidence in result.evidence],
                     "message": result.decision.message,
                 },
@@ -132,6 +149,7 @@ class P0Storage:
             tenants=self._count(connection, "tenants"),
             clients=self._count(connection, "clients"),
             engagements=self._count(connection, "engagements"),
+            approvals=self._count(connection, "approvals"),
             jobs=self._count(connection, "jobs"),
             evidence_records=self._count(connection, "evidence_records"),
             audit_events=self._count(connection, "audit_events"),
@@ -203,6 +221,31 @@ class P0Storage:
                 ),
                 engagement.expires_at.isoformat(),
                 _utc_timestamp(),
+            ),
+        )
+
+    def _insert_approval(self, connection: sqlite3.Connection, approval: ApprovalRequest) -> None:
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO approvals(
+                approval_id, tenant_id, client_id, engagement_id, adapter_id, target,
+                requested_by, requested_at, expires_at, state, decided_by, decided_at, decision_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                approval.approval_id,
+                approval.tenant_id,
+                approval.client_id,
+                approval.engagement_id,
+                approval.adapter_id,
+                approval.target,
+                approval.requested_by,
+                approval.requested_at.isoformat(),
+                approval.expires_at.isoformat(),
+                approval.state,
+                approval.decided_by,
+                approval.decided_at.isoformat() if approval.decided_at else None,
+                approval.decision_reason,
             ),
         )
 
@@ -336,5 +379,25 @@ CREATE TABLE report_drafts (
     finding_ids_json TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+"""
+
+_MIGRATION_002 = """
+ALTER TABLE jobs ADD COLUMN approval_id TEXT;
+
+CREATE TABLE approvals (
+    approval_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id),
+    client_id TEXT NOT NULL REFERENCES clients(client_id),
+    engagement_id TEXT NOT NULL REFERENCES engagements(engagement_id),
+    adapter_id TEXT NOT NULL,
+    target TEXT NOT NULL,
+    requested_by TEXT NOT NULL,
+    requested_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    state TEXT NOT NULL,
+    decided_by TEXT,
+    decided_at TEXT,
+    decision_reason TEXT NOT NULL
 );
 """

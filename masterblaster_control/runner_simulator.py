@@ -7,7 +7,17 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Any, Mapping
 
-from .p0_models import AdapterManifest, Engagement, EvidenceRecord, JobEnvelope, PolicyDecision, RulesOfEngagement, ScopeTarget
+from .p0_approvals import validate_approval
+from .p0_models import (
+    AdapterManifest,
+    ApprovalRequest,
+    Engagement,
+    EvidenceRecord,
+    JobEnvelope,
+    PolicyDecision,
+    RulesOfEngagement,
+    ScopeTarget,
+)
 from .p0_policy import (
     REASON_ALLOW,
     canonical_json,
@@ -51,6 +61,7 @@ class RunnerResult:
     status: str
     decision: PolicyDecision
     engagement: Engagement
+    approval: ApprovalRequest | None = None
     job: JobEnvelope | None = None
     evidence: tuple[EvidenceRecord, ...] = ()
 
@@ -78,6 +89,7 @@ class RunnerSimulator:
         adapter_id: str,
         target: str,
         engagement: Engagement | None = None,
+        approval: ApprovalRequest | None = None,
         arguments: Mapping[str, str] | None = None,
         now: datetime | None = None,
     ) -> RunnerResult:
@@ -91,7 +103,16 @@ class RunnerSimulator:
         manifest = MANIFESTS.get(adapter_id)
         decision = evaluate_policy(manifest, engagement, target, arguments, now=current_time)
         if not decision.allowed:
-            return RunnerResult(status="denied", decision=decision, engagement=engagement)
+            return RunnerResult(status="denied", decision=decision, engagement=engagement, approval=approval)
+
+        approval_decision = validate_approval(approval, engagement, adapter_id, target, now=current_time)
+        if not approval_decision.allowed:
+            return RunnerResult(
+                status="denied",
+                decision=approval_decision,
+                engagement=engagement,
+                approval=approval,
+            )
 
         job = JobEnvelope(
             job_id=f"job-{uuid.uuid4()}",
@@ -114,13 +135,20 @@ class RunnerSimulator:
             now=current_time,
         )
         if not runner_decision.allowed:
-            return RunnerResult(status="denied", decision=runner_decision, engagement=engagement, job=signed_job)
+            return RunnerResult(
+                status="denied",
+                decision=runner_decision,
+                engagement=engagement,
+                approval=approval,
+                job=signed_job,
+            )
 
         evidence = self._simulate_adapter(manifest, signed_job)
         return RunnerResult(
             status="completed",
             decision=runner_decision,
             engagement=engagement,
+            approval=approval,
             job=signed_job,
             evidence=(evidence,),
         )

@@ -36,6 +36,8 @@ from .masterblaster_bridge import MasterBlasterBridge
 from .mcp_definitions import MCPS, get_mcp_by_id
 from .mcp_tab import MCPTab
 from .p0_acceptance import acceptance_dashboard_markdown
+from .p0_approvals import approve_request, deny_request
+from .p0_models import ApprovalRequest
 from .p0_resources import resource_summary_markdown
 from .p0_storage import P0Storage, StorageSnapshot
 from .runner_simulator import MANIFESTS, RunnerSimulator
@@ -496,13 +498,38 @@ class MainWindow(QMainWindow):
     def update_intel(self, text):
         self.intel_edit.append(text)
 
+    def request_human_approval(self, approval: ApprovalRequest) -> ApprovalRequest:
+        message = (
+            "Approve this P0 simulator job request?\n\n"
+            f"Adapter: {approval.adapter_id}\n"
+            f"Target: {approval.target}\n"
+            f"Engagement: {approval.engagement_id}\n"
+            f"Expires: {approval.expires_at.isoformat()}\n\n"
+            "This approval only permits fixture simulation. It does not allow live tools or network access."
+        )
+        decision = QMessageBox.question(
+            self,
+            "Human Approval Required",
+            message,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if decision == QMessageBox.StandardButton.Yes:
+            approved = approve_request(approval)
+            self.log_message(f"Approval {approved.approval_id} approved for {approved.adapter_id}")
+            return approved
+
+        denied = deny_request(approval)
+        self.log_message(f"Approval {denied.approval_id} denied for {denied.adapter_id}")
+        return denied
+
     def record_runner_result(self, result) -> StorageSnapshot:
         self.storage.record_runner_result(result)
         snapshot = self.storage.snapshot()
         self.log_message(
             "Storage snapshot: "
-            f"{snapshot.jobs} job(s), {snapshot.evidence_records} evidence record(s), "
-            f"{snapshot.audit_events} audit event(s)"
+            f"{snapshot.approvals} approval(s), {snapshot.jobs} job(s), "
+            f"{snapshot.evidence_records} evidence record(s), {snapshot.audit_events} audit event(s)"
         )
         return snapshot
 
@@ -600,6 +627,7 @@ class MainWindow(QMainWindow):
             f"Tenants: {snapshot.tenants}\n"
             f"Clients: {snapshot.clients}\n"
             f"Engagements: {snapshot.engagements}\n"
+            f"Approvals: {snapshot.approvals}\n"
             f"Jobs: {snapshot.jobs}\n"
             f"Evidence records: {snapshot.evidence_records}\n"
             f"Audit events: {snapshot.audit_events}"

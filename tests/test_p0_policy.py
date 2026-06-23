@@ -1,6 +1,7 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
+from masterblaster_control.p0_approvals import approve_request, request_approval
 from masterblaster_control.p0_models import Engagement, RulesOfEngagement, ScopeTarget
 from masterblaster_control.p0_policy import (
     REASON_ALLOW,
@@ -77,12 +78,13 @@ def test_expired_engagement_is_denied():
 def test_tampered_signed_job_is_denied():
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     runner = RunnerSimulator(signing_key=bytes(range(32)))
-    result = runner.run("a0.fixture.inventory", "example.com", now=now)
+    engagement = build_default_engagement("example.com", now=now)
+    approval = approve_request(request_approval(engagement, "a0.fixture.inventory", "example.com", now=now), now=now)
+    result = runner.run("a0.fixture.inventory", "example.com", engagement=engagement, approval=approval, now=now)
     assert result.decision.reason_code == REASON_ALLOW
     assert result.job is not None
 
     tampered = replace(result.job, target="other.example")
-    engagement = build_default_engagement("example.com", now=now)
     manifest = MANIFESTS["a0.fixture.inventory"]
 
     decision = validate_job_envelope(tampered, manifest, engagement, bytes(range(32)), now=now)

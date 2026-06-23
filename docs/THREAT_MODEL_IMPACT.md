@@ -5,6 +5,7 @@
 - Local workstation integrity.
 - Engagement scope and authorization decisions.
 - Simulator job envelopes.
+- Human approval artifacts.
 - Evidence provenance and report drafts.
 - Local SQLite audit history.
 - Non-executing planning, reporting, and governance resources.
@@ -13,6 +14,8 @@
 ## Trust Boundaries
 
 The UI is not trusted for authorization. The runner simulator validates the signed envelope and re-evaluates policy before evidence is emitted.
+
+Human approvals are not trusted because the UI displays them. The runner validates approval state, expiry, tenant, client, engagement, adapter, and target binding before issuing a job envelope.
 
 The SQLite store is not trusted for authorization. It records runner outcomes after validation and is used only for local audit and report drafting.
 
@@ -29,6 +32,7 @@ Acceptance criteria are not trusted for authorization. They document readiness a
 - Lost in-memory audit context, because completed and denied simulator outcomes are persisted locally.
 - Resource confusion, because unknown resource URIs fail closed and registered resources self-declare as non-executing content.
 - Readiness inflation, because acceptance percentages are computed from explicit criteria with evidence links and blockers.
+- Approval spoofing, because missing, denied, expired, or mismatched approvals fail closed before job issuance.
 
 ## Threats Remaining
 

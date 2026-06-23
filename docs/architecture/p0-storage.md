@@ -14,6 +14,7 @@ Storage is not an authorization boundary. The UI may request a run, but the `Run
 - `tenants`: simulator tenant records.
 - `clients`: simulator client records.
 - `engagements`: authorized scope and rules-of-engagement snapshots.
+- `approvals`: human approval artifacts for simulator requests.
 - `jobs`: signed simulator job envelopes and policy decisions.
 - `evidence_records`: deterministic fixture evidence with parser and hash provenance.
 - `audit_events`: completed and denied runner outcomes.

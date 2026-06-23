@@ -8,9 +8,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from masterblaster_control.p0_acceptance import acceptance_summary
+from masterblaster_control.p0_approvals import approve_request, deny_request, request_approval
 from masterblaster_control.p0_resources import list_resources
 from masterblaster_control.p0_storage import P0Storage
-from masterblaster_control.runner_simulator import MANIFESTS, RunnerSimulator
+from masterblaster_control.runner_simulator import MANIFESTS, RunnerSimulator, build_default_engagement
 
 
 def main() -> int:
@@ -31,13 +32,29 @@ def main() -> int:
     runner = RunnerSimulator(signing_key=bytes(range(32)))
     storage = P0Storage(":memory:")
 
-    completed = runner.run("a0.fixture.inventory", "example.com")
-    denied = runner.run("a1.tls.assessment", "192.0.2.10")
+    engagement = build_default_engagement("example.com")
+    approved = approve_request(request_approval(engagement, "a0.fixture.inventory", "example.com"))
+    denied_approval = deny_request(request_approval(engagement, "a0.fixture.inventory", "example.com"))
+
+    completed = runner.run(
+        "a0.fixture.inventory",
+        "example.com",
+        engagement=engagement,
+        approval=approved,
+    )
+    denied = runner.run(
+        "a0.fixture.inventory",
+        "example.com",
+        engagement=engagement,
+        approval=denied_approval,
+    )
 
     for result in (completed, denied):
         storage.record_runner_result(result)
         status = result.status.upper()
         print(f"{status}: {result.decision.reason_code} - {result.decision.message}")
+        if result.approval:
+            print(f"  approval={result.approval.approval_id} state={result.approval.state}")
         if result.job:
             print(f"  job={result.job.job_id} target={result.job.target} signature={result.job.signature[:16]}...")
         for evidence in result.evidence:
@@ -48,7 +65,8 @@ def main() -> int:
     print(
         "Storage snapshot: "
         f"tenants={snapshot.tenants}, clients={snapshot.clients}, engagements={snapshot.engagements}, "
-        f"jobs={snapshot.jobs}, evidence={snapshot.evidence_records}, audit={snapshot.audit_events}"
+        f"approvals={snapshot.approvals}, jobs={snapshot.jobs}, evidence={snapshot.evidence_records}, "
+        f"audit={snapshot.audit_events}"
     )
 
     summary = acceptance_summary()

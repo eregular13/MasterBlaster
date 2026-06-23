@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 
 def utc_now() -> datetime:
@@ -42,6 +42,33 @@ class Engagement:
     authorized_targets: tuple[ScopeTarget, ...]
     rules: RulesOfEngagement
     expires_at: datetime
+
+
+ApprovalState = Literal["requested", "approved", "denied", "expired"]
+
+
+@dataclass(frozen=True)
+class ApprovalRequest:
+    approval_id: str
+    tenant_id: str
+    client_id: str
+    engagement_id: str
+    adapter_id: str
+    target: str
+    requested_by: str
+    requested_at: datetime
+    expires_at: datetime
+    state: ApprovalState = "requested"
+    decided_by: str | None = None
+    decided_at: datetime | None = None
+    decision_reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["requested_at"] = self.requested_at.isoformat()
+        data["expires_at"] = self.expires_at.isoformat()
+        data["decided_at"] = self.decided_at.isoformat() if self.decided_at else None
+        return data
 
 
 @dataclass(frozen=True)

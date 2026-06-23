@@ -7,6 +7,7 @@ MasterBlaster is being narrowed into an authorized security assessment control p
 - Reviewed adapter manifest registry with deny-by-default lookup.
 - Deterministic target parsing for host, domain, IP, CIDR, and HTTP(S) URL inputs.
 - Scope and rules-of-engagement policy decisions with stable reason codes.
+- Human approval artifacts validated by the runner before job issuance.
 - Signed, expiring, tenant-bound, client-bound, engagement-bound, target-bound, and adapter-bound job envelopes.
 - Runner simulator that independently validates policy and job signatures before emitting fixture evidence.
 - One offline A0 fixture inventory adapter.
@@ -66,12 +67,19 @@ All UI actions route through these manifests and the runner simulator. There is 
 The desktop UI initializes `data/masterblaster_p0.sqlite3` for local simulator state. This database records runner results after policy validation:
 
 - tenant, client, and engagement records;
+- human approval artifacts;
 - signed job envelopes for allowed simulator runs;
 - hashed fixture evidence;
 - audit events for both denied and completed runs;
 - a migration table and report draft table skeleton.
 
 The storage layer is deliberately passive. It does not authorize jobs, execute adapters, or override runner decisions.
+
+## Human Approval Gate
+
+Simulator jobs require an approval artifact before the runner issues a signed envelope. The Qt UI asks for local human confirmation, but the runner still validates that the approval is approved, unexpired, and bound to the same tenant, client, engagement, adapter, and target.
+
+Denied, expired, missing, or mismatched approvals fail closed.
 
 ## Non-Executing Resources
 
