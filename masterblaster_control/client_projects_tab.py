@@ -28,7 +28,12 @@ from .professional_reporting import (
 from .findings_proposal import generate_consulting_proposal, proposal_markdown
 from .usage_logging import export_usage_csv, usage_summary_markdown
 from .invoice_export import export_invoice_summary_csv
+from .accounting_export import export_quickbooks_csv, export_xero_csv
+from .client_portal_dashboard import render_client_portal_html
+from .consultant_dashboard import consultant_dashboard_markdown
 from .pdf_report_renderer import default_pdf_output_path, render_client_report_pdf
+from .retest_workflow import create_retest_campaign, retest_summary_markdown
+from .sow_generator import generate_sow_from_report, sow_markdown
 from .utils import write_export_file, write_watermarked_report
 
 
@@ -103,7 +108,25 @@ class ClientProjectsTab(QWidget):
         proposal_btn.clicked.connect(self._generate_proposal)
         buttons.addWidget(proposal_btn)
 
+        sow_btn = QPushButton("Proposal → SOW")
+        sow_btn.clicked.connect(self._generate_sow)
+        buttons.addWidget(sow_btn)
+
         root.addLayout(buttons)
+
+        workflow_row = QHBoxLayout()
+        portal_btn = QPushButton("Client Portal (HTML)")
+        portal_btn.clicked.connect(self._export_portal)
+        workflow_row.addWidget(portal_btn)
+
+        retest_btn = QPushButton("Create Re-test Campaign")
+        retest_btn.clicked.connect(self._create_retest)
+        workflow_row.addWidget(retest_btn)
+
+        util_btn = QPushButton("Consultant Utilization")
+        util_btn.clicked.connect(self._show_utilization)
+        workflow_row.addWidget(util_btn)
+        root.addLayout(workflow_row)
 
         export_row = QHBoxLayout()
         csv_btn = QPushButton("Export Findings CSV (CRM)")
@@ -121,6 +144,14 @@ class ClientProjectsTab(QWidget):
         invoice_btn = QPushButton("Export Invoice Summary CSV")
         invoice_btn.clicked.connect(self._export_invoice)
         export_row.addWidget(invoice_btn)
+
+        qb_btn = QPushButton("Export QuickBooks CSV")
+        qb_btn.clicked.connect(self._export_quickbooks)
+        export_row.addWidget(qb_btn)
+
+        xero_btn = QPushButton("Export Xero CSV")
+        xero_btn.clicked.connect(self._export_xero)
+        export_row.addWidget(xero_btn)
         root.addLayout(export_row)
 
         self.output = QTextEdit()
@@ -290,3 +321,65 @@ class ClientProjectsTab(QWidget):
         path = write_export_file(export_report_json(report), "client_report", "json")
         self.main.log_message(f"Report JSON exported: {path}")
         QMessageBox.information(self, "Export", f"Report JSON:\n{path}")
+
+    def _generate_sow(self):
+        client_name, project_name, template_id, engagement_id = self._report_context()
+        report = generate_professional_report(
+            self.main.storage,
+            engagement_id=engagement_id,
+            client_name=client_name,
+            project_name=project_name,
+            template_id=template_id,
+        )
+        sow, proposal = generate_sow_from_report(report)
+        md = sow_markdown(sow, proposal)
+        path = write_watermarked_report(md, self.main.watermark_enabled, prefix="statement_of_work")
+        self.output.setPlainText(md)
+        self.main.log_message(f"SOW generated: {path}")
+        QMessageBox.information(self, "SOW", f"Statement of Work saved:\n{path}")
+
+    def _export_portal(self):
+        project = self._selected_project()
+        client_name, project_name, template_id, engagement_id = self._report_context()
+        report = generate_professional_report(
+            self.main.storage,
+            engagement_id=engagement_id,
+            client_name=client_name,
+            project_name=project_name,
+            template_id=template_id,
+        )
+        html = render_client_portal_html(self.main.storage, project=project, report=report)
+        path = write_export_file(html, "client_portal", "html")
+        self.output.setPlainText(f"Client portal exported: {path}")
+        self.main.log_message(f"Client portal HTML: {path}")
+        QMessageBox.information(self, "Portal", f"Client portal dashboard:\n{path}")
+
+    def _create_retest(self):
+        client_name, project_name, template_id, engagement_id = self._report_context()
+        report = generate_professional_report(
+            self.main.storage,
+            engagement_id=engagement_id,
+            client_name=client_name,
+            project_name=project_name,
+            template_id=template_id,
+        )
+        campaign = create_retest_campaign(report)
+        md = retest_summary_markdown(campaign)
+        self.output.setPlainText(md)
+        self.main.log_message(f"Re-test campaign created: {campaign.campaign_id}")
+        QMessageBox.information(self, "Re-test", f"Campaign `{campaign.campaign_id}` created with {len(campaign.items)} items.")
+
+    def _show_utilization(self):
+        md = consultant_dashboard_markdown(self.main.storage)
+        self.output.setPlainText(md)
+        self.main.log_message("Consultant utilization dashboard refreshed")
+
+    def _export_quickbooks(self):
+        path = write_export_file(export_quickbooks_csv(self.main.storage), "quickbooks_invoices", "csv")
+        self.main.log_message(f"QuickBooks CSV exported: {path}")
+        QMessageBox.information(self, "Export", f"QuickBooks invoice CSV:\n{path}")
+
+    def _export_xero(self):
+        path = write_export_file(export_xero_csv(self.main.storage), "xero_invoices", "csv")
+        self.main.log_message(f"Xero CSV exported: {path}")
+        QMessageBox.information(self, "Export", f"Xero invoice CSV:\n{path}")

@@ -47,6 +47,29 @@ MasterBlaster is a **monetizable control plane** for cybersecurity consulting fi
 | **PDF client reports** | Branded cover page, executive summary, signature blocks (ReportLab) |
 | **Live tool transport** | Governed nmap/nuclei/sqlmap execution when ROE + feature flag enabled |
 | **Invoice export** | Project contract value + usage units CSV for finance |
+| **Client portal** | HTML engagement dashboard for stakeholder visibility |
+| **Re-test workflow** | Remediation verification campaigns for follow-on billing |
+| **Accounting exports** | QuickBooks Online and Xero invoice CSV import |
+| **SOW generator** | Proposal → Statement of Work for contract execution |
+| **Consultant dashboard** | RBAC utilization metrics per consultant seat |
+| **Firm Settings** | Logo upload, signatories, live transport runbook |
+
+### Business-Critical Features (Revenue Impact)
+
+| Feature | Delivery Impact | Revenue / Upsell Impact | Status |
+| --- | --- | --- | --- |
+| PDF client reports (branded, signatures) | Same-day executive deliverable | Supports $10K–$50K engagement close-out | **v1.2** |
+| Live tool transport (governed MCPs) | Real scan data without custom tooling | Enables production pentest billing | **v1.2** |
+| Engagement templates + pipelines | 3–7 day delivery vs. 2–3 weeks manual | Higher margin per consultant hour | **v1.1** |
+| Findings → Proposal | Automated upsell narrative from evidence | $15K–$80K follow-on remediation SOWs | **v1.1** |
+| Proposal → SOW generator | Contract-ready scope in minutes | Accelerates signature on retainer work | **v1.2.1** |
+| Client portal (HTML) | Stakeholder visibility without calls | Reduces delivery friction; supports renewals | **v1.2.1** |
+| Re-test & validation workflow | Structured remediation verification | Billable re-test engagements ($5K–$15K) | **v1.2.1** |
+| QuickBooks / Xero exports | Finance-ready invoicing | Accurate billing; faster cash collection | **v1.2.1** |
+| Consultant utilization dashboard | Capacity planning across team | Utilization tracking for margin analysis | **v1.2.1** |
+| Usage logging + invoice CSV | Audit-grade billable event trail | Supports T&M and fixed-fee reconciliation | **v1.1** |
+| Evidence annex (PDF) | Professional artifact appendix | Increases report credibility with enterprise buyers | **v1.2.1** |
+| Firm Settings + logo upload | Consistent brand on all deliverables | Enterprise positioning for larger contracts | **v1.2.1** |
 
 ---
 
@@ -73,11 +96,11 @@ pip install -r requirements.txt
 python main.py
 # Clients & Projects → Create Project → Run Assessment Pipeline → Generate Client Report
 
-# CLI report generation
-python scripts/generate_client_report.py --client "Acme Corp" --project "Q2 Pentest" --proposal --csv
+# Full simulated paid engagement (project → pipeline → PDF → SOW → exports)
+python scripts/run_paid_engagement_demo.py example.com
 
-# Full 22-MCP assessment
-python scripts/demo_warlord_registry_queue.py example.com
+# CLI report generation
+python scripts/generate_client_report.py --client "Acme Corp" --project "Q2 Pentest" --proposal --pdf --csv
 ```
 
 ---

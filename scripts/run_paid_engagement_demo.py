@@ -12,7 +12,11 @@ if str(REPO_ROOT) not in sys.path:
 
 from masterblaster_control.client_projects import create_project
 from masterblaster_control.findings_proposal import generate_consulting_proposal, proposal_markdown
+from masterblaster_control.accounting_export import export_quickbooks_csv
+from masterblaster_control.client_portal_dashboard import render_client_portal_html
 from masterblaster_control.invoice_export import export_invoice_summary_csv
+from masterblaster_control.retest_workflow import create_retest_campaign, retest_summary_markdown
+from masterblaster_control.sow_generator import generate_sow_from_report, sow_markdown
 from masterblaster_control.pentest_pipeline import execute_assessment_pipeline, pipeline_report_markdown
 from masterblaster_control.pdf_report_renderer import default_pdf_output_path, render_client_report_pdf
 from masterblaster_control.p0_storage import P0Storage
@@ -63,13 +67,28 @@ def main() -> int:
     prop_path = write_watermarked_report(proposal_markdown(proposal, report), True, prefix="consulting_proposal")
     csv_path = write_export_file(export_findings_csv(report), "findings_crm", "csv")
     invoice_path = write_export_file(export_invoice_summary_csv(storage), "invoice_summary", "csv")
+    qb_path = write_export_file(export_quickbooks_csv(storage), "quickbooks_invoices", "csv")
+    sow, _ = generate_sow_from_report(report)
+    sow_path = write_watermarked_report(sow_markdown(sow, proposal), True, prefix="statement_of_work")
+    portal_path = write_export_file(
+        render_client_portal_html(storage, project=project, report=report),
+        "client_portal",
+        "html",
+    )
+    campaign = create_retest_campaign(report)
+    retest_md = retest_summary_markdown(campaign)
 
     print(f"\nDeliverables:")
     print(f"  Markdown report: {md_path}")
     print(f"  PDF report:      {pdf_path}")
     print(f"  Proposal:        {prop_path}")
+    print(f"  SOW:             {sow_path}")
+    print(f"  Client portal:   {portal_path}")
     print(f"  Findings CSV:    {csv_path}")
     print(f"  Invoice CSV:     {invoice_path}")
+    print(f"  QuickBooks CSV:  {qb_path}")
+    print(f"  Re-test items:   {len(campaign.items)} ({campaign.campaign_id})")
+    print(retest_md[:400])
     return 0
 
 

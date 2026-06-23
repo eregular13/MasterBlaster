@@ -21,6 +21,7 @@ from reportlab.platypus import (
 
 from .business_config import FirmConfig, load_firm_config
 from .engagement_templates import get_template
+from .evidence_annex import discover_evidence_images
 from .professional_reporting import (
     SEVERITY_ORDER,
     ProfessionalReport,
@@ -201,6 +202,28 @@ def render_client_report_pdf(
                 )
             )
             story.append(Spacer(1, 0.15 * inch))
+
+    # Evidence annex
+    evidence_images = discover_evidence_images(report)
+    if evidence_images:
+        story.append(PageBreak())
+        story.append(Paragraph("Evidence Annex", heading_style))
+        story.append(
+            Paragraph(
+                "The following artifacts support findings documented in this report.",
+                body_style,
+            )
+        )
+        story.append(Spacer(1, 0.15 * inch))
+        from reportlab.platypus import Image
+
+        for image_path in evidence_images:
+            story.append(Paragraph(f"<b>{image_path.name}</b>", body_style))
+            try:
+                story.append(Image(str(image_path), width=5.5 * inch, height=3 * inch))
+            except Exception:
+                story.append(Paragraph(f"[Unable to embed: {image_path.name}]", body_style))
+            story.append(Spacer(1, 0.2 * inch))
 
     story.append(PageBreak())
 

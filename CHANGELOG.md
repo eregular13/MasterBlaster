@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.1] - 2026-06-22
+
+### Added
+- **Client portal dashboard** — self-contained HTML engagement status export for stakeholders
+- **Re-test & validation workflow** — campaign tracking for remediation verification and follow-on billing
+- **QuickBooks / Xero invoice CSV** — accounting system import formats
+- **Consultant utilization dashboard** — RBAC-aware per-seat usage and project metrics
+- **Proposal → SOW generator** — client-ready Statement of Work from assessment findings
+- **Evidence annex** — screenshot appendix in PDF reports from `data/evidence/screenshots/`
+- **Firm Settings tab** — logo upload, signatories, billing defaults, live transport runbook export
+
+[1.2.1]: https://github.com/eregular13/MasterBlaster/releases/tag/v1.2.1
+
 ## [1.2.0] - 2026-06-22
 
 ### Added

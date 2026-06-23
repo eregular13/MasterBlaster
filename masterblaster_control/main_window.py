@@ -57,6 +57,7 @@ from .mcp_tool_arsenal import FULL_ASSAULT_CHAIN, FULL_REGISTRY_QUEUE
 from .kali_tool_wrappers import KALI_TOOL_REGISTRY, tool_arsenal_markdown, unleash_tool
 from .tool_arsenal_tab import ToolArsenalTab
 from .client_projects_tab import ClientProjectsTab
+from .firm_settings_tab import FirmSettingsTab
 from .p4_security import KeyStore, RBAC
 from .p8_auth import LocalAuthStore
 from .p8_workflow_assistant import assistant_markdown
@@ -257,6 +258,9 @@ class MainWindow(QMainWindow):
 
         self.client_projects_tab = ClientProjectsTab(self)
         self.main_tabs.addTab(self.client_projects_tab, "Clients & Projects")
+
+        self.firm_settings_tab = FirmSettingsTab(self)
+        self.main_tabs.addTab(self.firm_settings_tab, "Firm Settings")
 
         self.tool_arsenal_tab = ToolArsenalTab(self)
         self.main_tabs.addTab(self.tool_arsenal_tab, "Tool Integrations")
